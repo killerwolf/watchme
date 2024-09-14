@@ -1,6 +1,6 @@
 const { ipcRenderer } = require('electron');
 
-let selectedPIDs = [];
+let monitoredProcesses = new Map();
 let monitoringInterval = null;
 
 async function listProcesses() {
@@ -8,6 +8,7 @@ async function listProcesses() {
 
   const filterValue = document.getElementById('filter-input').value.toLowerCase();
 
+  // Filter scripts based on interpreters and filter input
   const scriptProcesses = processes.filter(
     (proc) =>
       //['node', 'python', 'bash', 'sh', 'perl', 'ruby'].includes(proc.name) &&
@@ -29,38 +30,50 @@ async function listProcesses() {
     scriptProcesses.forEach((proc) => {
       const row = document.createElement('tr');
 
-      if (selectedPIDs.includes(proc.pid)) {
+      if (monitoredProcesses.has(proc.pid)) {
         row.classList.add('table-warning');
       }
 
+      // Checkbox Cell
       const checkboxCell = document.createElement('td');
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.value = proc.pid;
-      checkbox.checked = selectedPIDs.includes(proc.pid);
+      checkbox.checked = monitoredProcesses.has(proc.pid);
 
       checkbox.addEventListener('change', (e) => {
         const pid = parseInt(e.target.value);
+        const processName = proc.name;
         if (e.target.checked) {
-          if (!selectedPIDs.includes(pid)) {
-            selectedPIDs.push(pid);
+          if (!monitoredProcesses.has(pid)) {
+            monitoredProcesses.set(pid, processName);
+            if (monitoringInterval === null) {
+              startMonitoring();
+            }
           }
         } else {
-          selectedPIDs = selectedPIDs.filter((id) => id !== pid);
+          monitoredProcesses.delete(pid);
+          if (monitoredProcesses.size === 0 && monitoringInterval !== null) {
+            clearInterval(monitoringInterval);
+            monitoringInterval = null;
+          }
         }
       });
 
       checkboxCell.appendChild(checkbox);
       row.appendChild(checkboxCell);
 
+      // PID Cell
       const pidCell = document.createElement('td');
       pidCell.textContent = proc.pid;
       row.appendChild(pidCell);
 
+      // Name Cell
       const nameCell = document.createElement('td');
       nameCell.textContent = proc.name;
       row.appendChild(nameCell);
 
+      // Command Cell
       const cmdCell = document.createElement('td');
       cmdCell.textContent = proc.cmd;
       row.appendChild(cmdCell);
@@ -93,44 +106,50 @@ filterInput.addEventListener(
   }, 300)
 );
 
-function monitorProcesses() {
-  if (selectedPIDs.length === 0) {
-    alert('Please select at least one process to monitor.');
-    return;
-  }
-
+function startMonitoring() {
   if (monitoringInterval !== null) {
-    clearInterval(monitoringInterval);
+    return;
   }
 
   monitoringInterval = setInterval(async () => {
     const processes = await ipcRenderer.invoke('get-processes');
     const runningPIDs = processes.map((proc) => proc.pid);
 
-    selectedPIDs.forEach((pid) => {
+    monitoredProcesses.forEach((processName, pid) => {
       if (!runningPIDs.includes(pid)) {
         // Process has ended
-        notifyProcessEnded(pid);
-        // Remove from selectedPIDs
-        selectedPIDs = selectedPIDs.filter((id) => id !== pid);
+        notifyProcessEnded(pid, processName);
+        // Remove from monitoredProcesses
+        monitoredProcesses.delete(pid);
+
+        // Update the UI
+        const checkbox = document.querySelector(`input[type="checkbox"][value="${pid}"]`);
+        if (checkbox) {
+          checkbox.checked = false;
+          // Remove highlight
+          const row = checkbox.closest('tr');
+          if (row) {
+            row.classList.remove('table-warning');
+          }
+        }
       }
     });
 
-    if (selectedPIDs.length === 0) {
+    if (monitoredProcesses.size === 0) {
       clearInterval(monitoringInterval);
       monitoringInterval = null;
     }
   }, 5000); // Check every 5 seconds
 }
 
-function notifyProcessEnded(pid) {
+function notifyProcessEnded(pid, processName) {
   // Display a notification
   if ('Notification' in window) {
     new Notification('Process Ended', {
-      body: `Process with PID ${pid} has ended.`,
+      body: `Process "${processName}" (PID ${pid}) has ended.`,
     });
   } else {
-    alert(`Process with PID ${pid} has ended.`);
+    alert(`Process "${processName}" (PID ${pid}) has ended.`);
   }
 
   // Play a sound (optional)
@@ -141,8 +160,6 @@ function playNotificationSound() {
   const audio = new Audio('notification_sound.mp3');
   audio.play();
 }
-
-document.getElementById('start-monitoring').addEventListener('click', monitorProcesses);
 
 // Initial list load
 listProcesses();
