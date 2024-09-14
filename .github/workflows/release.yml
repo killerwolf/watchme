@@ -29,4 +29,4 @@ jobs:
 
       - name: Package the app
         run: |
-          npx electron-builder --mac --publish always
+          npx electron-builder --mac --universal --publish always

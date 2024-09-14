@@ -22,9 +22,6 @@
         "dmg",
         "zip"
       ],
-      "arch": [
-        "universal"
-      ],
       "category": "public.app-category.utilities",
       "artifactName": "${productName}-${version}-universal.${ext}",
       "hardenedRuntime": true,
