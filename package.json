@@ -1,6 +1,6 @@
 {
   "name": "watchme",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "",
   "main": "main.js",
   "type": "module",
@@ -22,7 +22,11 @@
         "dmg",
         "zip"
       ],
+      "arch": [
+        "universal"
+      ],
       "category": "public.app-category.utilities",
+      "artifactName": "${productName}-${version}-universal.${ext}",
       "hardenedRuntime": true,
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",

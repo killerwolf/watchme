@@ -10,6 +10,7 @@ jobs:
     runs-on: macos-latest
     env:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      APP_VERSION: ${{ github.ref_name }}
 
     steps:
       - name: Checkout code
@@ -28,4 +29,4 @@ jobs:
 
       - name: Package the app
         run: |
-          npx electron-builder --mac --publish=always
+          npx electron-builder --mac --publish always
