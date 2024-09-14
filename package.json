@@ -5,15 +5,46 @@
   "main": "main.js",
   "type": "module",
   "scripts": {
+    "build": "electron-builder",
     "start": "electron ."
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "build": {
+    "appId": "com.mindmystory.watchme",
+    "productName": "WatchMe",
+    "directories": {
+      "output": "dist"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.utilities",
+      "hardenedRuntime": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "gatekeeperAssess": false
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Utility"
+    }
+  },
   "devDependencies": {
-    "electron": "^32.1.0"
+    "electron": "^32.1.0",
+    "electron-builder": "^25.0.5"
   },
   "dependencies": {
+    "electron-store": "^10.0.0",
     "ps-list": "^8.1.1"
   }
 }

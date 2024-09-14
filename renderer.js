@@ -1,19 +1,113 @@
+// renderer.js
 const { ipcRenderer } = require('electron');
 
 let monitoredProcesses = new Map();
 let monitoringInterval = null;
+
+function initialize() {
+  document.getElementById('tab-processes').addEventListener('click', (e) => {
+    e.preventDefault();
+    activateTab('processes');
+  });
+
+  document.getElementById('tab-preferences').addEventListener('click', (e) => {
+    e.preventDefault();
+    activateTab('preferences');
+  });
+
+  // Save preferences when the user clicks "Save"
+  document.getElementById('savePreferences').addEventListener('click', () => {
+    savePreferences();
+  });
+
+  // Initialize notifications
+  if (Notification.permission !== 'granted') {
+    Notification.requestPermission();
+  }
+
+  // Initial tab
+  activateTab('processes');
+}
+
+function activateTab(tabName) {
+  const processesTabLink = document.getElementById('tab-processes');
+  const preferencesTabLink = document.getElementById('tab-preferences');
+  const processesTabContent = document.getElementById('processes-tab');
+  const preferencesTabContent = document.getElementById('preferences-tab');
+
+  if (tabName === 'processes') {
+    processesTabLink.classList.add('active');
+    preferencesTabLink.classList.remove('active');
+    processesTabContent.style.display = 'block';
+    preferencesTabContent.style.display = 'none';
+    listProcesses();
+  } else if (tabName === 'preferences') {
+    preferencesTabLink.classList.add('active');
+    processesTabLink.classList.remove('active');
+    preferencesTabContent.style.display = 'block';
+    processesTabContent.style.display = 'none';
+    loadPreferences();
+  }
+}
+
+function loadPreferences() {
+  ipcRenderer.invoke('get-preferences').then((preferences) => {
+    document.getElementById('autoLaunch').checked = preferences.autoLaunch;
+    document.getElementById('prefilterRegex').value = preferences.prefilterRegex || '';
+  });
+}
+
+function savePreferences() {
+  const autoLaunch = document.getElementById('autoLaunch').checked;
+  const prefilterRegex = document.getElementById('prefilterRegex').value.trim();
+  ipcRenderer.send('save-preferences', { autoLaunch, prefilterRegex });
+
+  // Reload processes after saving preferences
+  if (document.getElementById('processes-tab').style.display === 'block') {
+    listProcesses();
+  }
+}
 
 async function listProcesses() {
   const processes = await ipcRenderer.invoke('get-processes');
 
   const filterValue = document.getElementById('filter-input').value.toLowerCase();
 
-  // Filter scripts based on interpreters and filter input
-  const scriptProcesses = processes.filter(
-    (proc) =>
-      //['node', 'python', 'bash', 'sh', 'perl', 'ruby'].includes(proc.name) &&
-      (proc.name.toLowerCase().includes(filterValue) || proc.cmd.toLowerCase().includes(filterValue))
-  );
+  // Get the prefilter regex from preferences
+  const prefs = await ipcRenderer.invoke('get-preferences');
+  const prefilterRegex = prefs.prefilterRegex;
+  console.log('Prefilter Regex:', prefilterRegex);
+
+  let prefilterPattern = null;
+
+  if (prefilterRegex && prefilterRegex.trim() !== '') {
+    try {
+      prefilterPattern = new RegExp(prefilterRegex.trim(), 'i'); // 'i' for case-insensitive
+      console.log('Prefilter Pattern:', prefilterPattern);
+    } catch (e) {
+      console.error('Invalid prefilter regex:', e);
+      alert('Invalid prefilter regular expression in preferences.');
+      return;
+    }
+  } else {
+    console.log('No prefilter regex provided; displaying all processes.');
+  }
+
+  // Filter processes based on the prefilter regex and filter input
+  const scriptProcesses = processes.filter((proc) => {
+    const nameMatchesFilter =
+      filterValue === '' ||
+      proc.name.toLowerCase().includes(filterValue) ||
+      proc.cmd.toLowerCase().includes(filterValue);
+
+    if (prefilterPattern) {
+      const prefilterMatch =
+        prefilterPattern.test(proc.name) || prefilterPattern.test(proc.cmd);
+      return prefilterMatch && nameMatchesFilter;
+    } else {
+      return nameMatchesFilter;
+    }
+  });
 
   const processTableBody = document.querySelector('#process-table tbody');
   processTableBody.innerHTML = '';
@@ -47,17 +141,22 @@ async function listProcesses() {
         if (e.target.checked) {
           if (!monitoredProcesses.has(pid)) {
             monitoredProcesses.set(pid, processName);
+            console.log(`Added process ${processName} (PID ${pid}) to monitoring.`);
             if (monitoringInterval === null) {
               startMonitoring();
             }
           }
         } else {
           monitoredProcesses.delete(pid);
+          console.log(`Removed process (PID ${pid}) from monitoring.`);
           if (monitoredProcesses.size === 0 && monitoringInterval !== null) {
             clearInterval(monitoringInterval);
             monitoringInterval = null;
           }
         }
+
+        // Update monitoring status
+        updateMonitoringStatus();
       });
 
       checkboxCell.appendChild(checkbox);
@@ -84,7 +183,11 @@ async function listProcesses() {
 }
 
 // Auto-refresh the process list every 2 seconds
-setInterval(listProcesses, 2000);
+setInterval(() => {
+  if (document.getElementById('processes-tab').style.display === 'block') {
+    listProcesses();
+  }
+}, 2000);
 
 // Debounce function to limit the rate of function calls
 function debounce(func, wait) {
@@ -132,6 +235,9 @@ function startMonitoring() {
             row.classList.remove('table-warning');
           }
         }
+
+        // Update monitoring status
+        updateMonitoringStatus();
       }
     });
 
@@ -143,8 +249,9 @@ function startMonitoring() {
 }
 
 function notifyProcessEnded(pid, processName) {
+  console.log(`Process "${processName}" (PID ${pid}) has ended.`);
   // Display a notification
-  if ('Notification' in window) {
+  if (Notification.permission === 'granted') {
     new Notification('Process Ended', {
       body: `Process "${processName}" (PID ${pid}) has ended.`,
     });
@@ -153,13 +260,15 @@ function notifyProcessEnded(pid, processName) {
   }
 
   // Play a sound (optional)
-  playNotificationSound();
+  // playNotificationSound();
 }
 
-function playNotificationSound() {
-  const audio = new Audio('notification_sound.mp3');
-  audio.play();
+function updateMonitoringStatus() {
+  // Send the number of monitored processes to main process
+  ipcRenderer.send('update-tray-tooltip', monitoredProcesses.size);
+  // Also send the monitoredProcesses map
+  ipcRenderer.send('update-monitored-processes', Array.from(monitoredProcesses.entries()));
 }
 
-// Initial list load
-listProcesses();
+// Initialize the app when the content is loaded
+document.addEventListener('DOMContentLoaded', initialize);
