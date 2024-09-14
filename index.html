@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Script Watcher</title>
+  <!-- Include Bootstrap CSS -->
+  <link
+    rel="stylesheet"
+    href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+  />
+</head>
+<body>
+    <!-- Place this inside the <body> tag, before the container div -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="#">Script Watcher</a>
+  </nav>
+  
+  <div class="container mt-4">
+    <h1 class="mb-4">Running Scripts</h1>
+
+    <!-- Filter Input -->
+    <div class="form-group">
+      <input type="text" id="filter-input" class="form-control" placeholder="Filter by name" />
+    </div>
+
+    <!-- Process Table -->
+    <table class="table table-striped" id="process-table">
+      <thead class="thead-dark">
+        <tr>
+          <th scope="col"></th>
+          <th scope="col">PID</th>
+          <th scope="col">Name</th>
+          <th scope="col">Command</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Process rows will be inserted here -->
+      </tbody>
+    </table>
+
+    <!-- Start Monitoring Button -->
+    <button id="start-monitoring" class="btn btn-primary">Start Monitoring</button>
+  </div>
+
+  <!-- Include Bootstrap JS (optional) -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "watchme",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^32.1.0"
+  },
+  "dependencies": {
+    "ps-list": "^8.1.1"
+  }
+}
