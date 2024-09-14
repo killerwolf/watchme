@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: macos-latest
+    env:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
     steps:
       - name: Checkout code
@@ -27,5 +29,3 @@ jobs:
       - name: Package the app
         run: |
           npx electron-builder --mac --publish=always
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
