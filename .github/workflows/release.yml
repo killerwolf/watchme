@@ -21,6 +21,12 @@ jobs:
         with:
           node-version: '20'
 
+      # New step to set the npm version
+      - name: Set app version
+        run: |
+          echo "Setting app version to $APP_VERSION"
+          npm version ${{ github.ref_name }} --no-git-tag-version
+
       - name: Install dependencies
         run: npm install
 

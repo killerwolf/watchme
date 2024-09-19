@@ -1,18 +1,29 @@
 // renderer.js
-const { ipcRenderer } = require('electron');
 
 let monitoredProcesses = new Map();
 let monitoringInterval = null;
 
 function initialize() {
-  document.getElementById('tab-processes').addEventListener('click', (e) => {
-    e.preventDefault();
-    activateTab('processes');
-  });
 
-  document.getElementById('tab-preferences').addEventListener('click', (e) => {
-    e.preventDefault();
-    activateTab('preferences');
+    // Initialize notifications
+    if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+      Notification.requestPermission();
+    }
+
+  // Sidebar Navigation Event Listeners
+  document.querySelectorAll('.sidebar-item').forEach((item) => {
+    item.addEventListener('click', () => {
+      const tabName = item.getAttribute('data-tab');
+      activateTab(tabName);
+    });
+
+    // Enable keyboard navigation
+    item.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        const tabName = item.getAttribute('data-tab');
+        activateTab(tabName);
+      }
+    });
   });
 
   // Save preferences when the user clicks "Save"
@@ -25,33 +36,65 @@ function initialize() {
     Notification.requestPermission();
   }
 
-  // Initial tab
-  activateTab('processes');
+  // Window Control Buttons
+  /*
+  document.getElementById('minimize-button').addEventListener('click', () => {
+    window.electronAPI.windowControl('minimize');
+  });
+
+  document.getElementById('maximize-button').addEventListener('click', () => {
+    window.electronAPI.windowControl('maximize');
+  });
+
+  document.getElementById('close-button').addEventListener('click', () => {
+    window.electronAPI.windowControl('close');
+  });
+  */
+
+  document.getElementById('quit-app-button').addEventListener('click', () => {
+    window.electronAPI.quitApp();
+  });
+
+  // Enable keyboard navigation for the Quit App button
+  document.getElementById('quit-app-button').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      window.electronAPI.quitApp();
+    }
+  });
+
+    // Initial tab
+    activateTab('processes');
 }
 
 function activateTab(tabName) {
-  const processesTabLink = document.getElementById('tab-processes');
-  const preferencesTabLink = document.getElementById('tab-preferences');
-  const processesTabContent = document.getElementById('processes-tab');
-  const preferencesTabContent = document.getElementById('preferences-tab');
+  // Hide all tab contents
+  document.querySelectorAll('.tab-content').forEach((tab) => {
+    tab.classList.remove('active');
+    tab.style.display = 'none';
+  });
+
+  // Show the selected tab content
+  const activeTab = document.getElementById(`${tabName}-tab`);
+  activeTab.style.display = 'block';
+  setTimeout(() => {
+    activeTab.classList.add('active');
+  }, 0);
+
+  // Update active sidebar item
+  document.querySelectorAll('.sidebar-item').forEach((item) => {
+    item.classList.remove('active');
+  });
+  document.querySelector(`.sidebar-item[data-tab="${tabName}"]`).classList.add('active');
 
   if (tabName === 'processes') {
-    processesTabLink.classList.add('active');
-    preferencesTabLink.classList.remove('active');
-    processesTabContent.style.display = 'block';
-    preferencesTabContent.style.display = 'none';
     listProcesses();
   } else if (tabName === 'preferences') {
-    preferencesTabLink.classList.add('active');
-    processesTabLink.classList.remove('active');
-    preferencesTabContent.style.display = 'block';
-    processesTabContent.style.display = 'none';
     loadPreferences();
   }
 }
 
 function loadPreferences() {
-  ipcRenderer.invoke('get-preferences').then((preferences) => {
+  window.electronAPI.getPreferences().then((preferences) => {
     document.getElementById('autoLaunch').checked = preferences.autoLaunch;
     document.getElementById('prefilterRegex').value = preferences.prefilterRegex || '';
   });
@@ -60,7 +103,7 @@ function loadPreferences() {
 function savePreferences() {
   const autoLaunch = document.getElementById('autoLaunch').checked;
   const prefilterRegex = document.getElementById('prefilterRegex').value.trim();
-  ipcRenderer.send('save-preferences', { autoLaunch, prefilterRegex });
+  window.electronAPI.savePreferences({ autoLaunch, prefilterRegex });
 
   // Reload processes after saving preferences
   if (document.getElementById('processes-tab').style.display === 'block') {
@@ -69,12 +112,12 @@ function savePreferences() {
 }
 
 async function listProcesses() {
-  const processes = await ipcRenderer.invoke('get-processes');
+  const processes = await window.electronAPI.getProcesses();
 
   const filterValue = document.getElementById('filter-input').value.toLowerCase();
 
   // Get the prefilter regex from preferences
-  const prefs = await ipcRenderer.invoke('get-preferences');
+  const prefs = await window.electronAPI.getPreferences();
   const prefilterRegex = prefs.prefilterRegex;
   console.log('Prefilter Regex:', prefilterRegex);
 
@@ -109,7 +152,7 @@ async function listProcesses() {
     }
   });
 
-  const processTableBody = document.querySelector('#process-table tbody');
+  const processTableBody = document.querySelector('#process-table-body');
   processTableBody.innerHTML = '';
 
   if (scriptProcesses.length === 0) {
@@ -125,7 +168,7 @@ async function listProcesses() {
       const row = document.createElement('tr');
 
       if (monitoredProcesses.has(proc.pid)) {
-        row.classList.add('table-warning');
+        row.classList.add('highlighted-row');
       }
 
       // Checkbox Cell
@@ -215,7 +258,7 @@ function startMonitoring() {
   }
 
   monitoringInterval = setInterval(async () => {
-    const processes = await ipcRenderer.invoke('get-processes');
+    const processes = await window.electronAPI.getProcesses();
     const runningPIDs = processes.map((proc) => proc.pid);
 
     monitoredProcesses.forEach((processName, pid) => {
@@ -232,7 +275,7 @@ function startMonitoring() {
           // Remove highlight
           const row = checkbox.closest('tr');
           if (row) {
-            row.classList.remove('table-warning');
+            row.classList.remove('highlighted-row');
           }
         }
 
@@ -250,24 +293,41 @@ function startMonitoring() {
 
 function notifyProcessEnded(pid, processName) {
   console.log(`Process "${processName}" (PID ${pid}) has ended.`);
-  // Display a notification
+  
+  // Display a desktop notification
   if (Notification.permission === 'granted') {
     new Notification('Process Ended', {
       body: `Process "${processName}" (PID ${pid}) has ended.`,
     });
+  } else if (Notification.permission !== 'denied') {
+    Notification.requestPermission().then((permission) => {
+      if (permission === 'granted') {
+        new Notification('Process Ended', {
+          body: `Process "${processName}" (PID ${pid}) has ended.`,
+        });
+      } else {
+        alert(`Process "${processName}" (PID ${pid}) has ended.`);
+      }
+    });
   } else {
+    // If permission was denied
     alert(`Process "${processName}" (PID ${pid}) has ended.`);
   }
 
-  // Play a sound (optional)
-  // playNotificationSound();
+  // Play a sound notification
+  playNotificationSound();
+}
+
+function playNotificationSound() {
+  const audio = new Audio('notification-sound.mp3'); // Ensure you have this file in your project's directory
+  audio.play();
 }
 
 function updateMonitoringStatus() {
   // Send the number of monitored processes to main process
-  ipcRenderer.send('update-tray-tooltip', monitoredProcesses.size);
+  window.electronAPI.updateTrayTooltip(monitoredProcesses.size);
   // Also send the monitoredProcesses map
-  ipcRenderer.send('update-monitored-processes', Array.from(monitoredProcesses.entries()));
+  window.electronAPI.updateMonitoredProcesses(Array.from(monitoredProcesses.entries()));
 }
 
 // Initialize the app when the content is loaded

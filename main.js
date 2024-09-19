@@ -2,10 +2,14 @@
 import { app, BrowserWindow, ipcMain, Tray, nativeImage, screen } from 'electron';
 import path from 'path';
 import psList from 'ps-list';
-import { fileURLToPath } from 'url';
 import Store from 'electron-store';
+import { initialize, enable } from '@electron/remote/main/index.js'; // Adjusted import
+
+// Initialize @electron/remote
+initialize();
 
 // Define __dirname in ES modules
+import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -24,26 +28,38 @@ let preferences = store.get('preferences', {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 400, // Half the width
+    width: 800, // Half the width
     height: 500,
+    minWidth: 400,
+    minHeight: 300,
     show: false, // Start hidden
     frame: false, // Frameless window
-    resizable: false,
+    resizable: true,
     alwaysOnTop: true,
     skipTaskbar: true,
-    transparent: true, // Optional: Make window transparent
+    transparent: false, // Set to false for better performance
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
+      nodeIntegration: false, // Disable nodeIntegration for security
+      contextIsolation: true, // Enable context isolation
+      preload: path.join(__dirname, 'preload.js'), // Use a preload script
     },
   });
 
   mainWindow.loadFile('index.html');
 
+  // Enable @electron/remote in the renderer process
+  enable(mainWindow.webContents);
+
   // Hide the window instead of closing when the close button is clicked
   mainWindow.on('close', (event) => {
     if (!app.isQuitting) {
       event.preventDefault();
+      mainWindow.hide();
+    }
+  });
+
+  mainWindow.on('blur', () => {
+    if (!mainWindow.webContents.isDevToolsOpened()) {
       mainWindow.hide();
     }
   });
@@ -67,7 +83,7 @@ function showWindow() {
   const windowBounds = mainWindow.getBounds();
 
   // Calculate the x and y coordinates
-  let x = Math.round(trayBounds.x + (trayBounds.width / 2) - (windowBounds.width / 2));
+  let x = Math.round(trayBounds.x + trayBounds.width / 2 - windowBounds.width / 2);
   let y;
 
   if (process.platform === 'darwin') {
@@ -79,10 +95,21 @@ function showWindow() {
   }
 
   // Ensure the window is within the bounds of the display
-  x = Math.max(display.bounds.x, Math.min(x, display.bounds.x + display.bounds.width - windowBounds.width));
-  y = Math.max(display.bounds.y, Math.min(y, display.bounds.y + display.bounds.height - windowBounds.height));
+  x = Math.max(
+    display.bounds.x,
+    Math.min(x, display.bounds.x + display.bounds.width - windowBounds.width)
+  );
+  y = Math.max(
+    display.bounds.y,
+    Math.min(y, display.bounds.y + display.bounds.height - windowBounds.height)
+  );
 
   mainWindow.setPosition(x, y, false);
+
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore();
+  }
+
   mainWindow.show();
   mainWindow.focus();
 }
@@ -126,12 +153,43 @@ ipcMain.on('save-preferences', (event, newPreferences) => {
 });
 
 ipcMain.on('update-tray-tooltip', (event, numProcesses) => {
-  const tooltip = `Script Watcher - Monitoring ${numProcesses} process${numProcesses === 1 ? '' : 'es'}`;
+  const tooltip = `Script Watcher - Monitoring ${numProcesses} process${
+    numProcesses === 1 ? '' : 'es'
+  }`;
   tray.setToolTip(tooltip);
 });
 
 ipcMain.on('update-monitored-processes', (event, monitoredPIDs) => {
   // You can handle monitored processes here if needed
+});
+
+// Handle window control actions
+ipcMain.on('window-control', (event, action) => {
+  switch (action) {
+    case 'minimize':
+      mainWindow.minimize();
+      break;
+    case 'maximize':
+      if (mainWindow.isMaximized()) {
+        mainWindow.unmaximize();
+      } else {
+        mainWindow.maximize();
+      }
+      break;
+    case 'close':
+      if (process.platform !== 'darwin') {
+        app.isQuitting = true;
+        app.quit();
+      } else {
+        mainWindow.hide();
+      }
+      break;
+  }
+});
+
+ipcMain.on('quit-app', () => {
+  app.isQuitting = true;
+  app.quit();
 });
 
 app.whenReady().then(() => {

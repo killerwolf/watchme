@@ -12,6 +12,10 @@
   "author": "",
   "license": "ISC",
   "build": {
+    "files": [
+      "**/*",
+      "preload.js"
+    ],
     "appId": "com.mindmystory.watchme",
     "productName": "WatchMe",
     "directories": {
@@ -45,6 +49,7 @@
     "electron-builder": "^25.0.5"
   },
   "dependencies": {
+    "@electron/remote": "^2.1.2",
     "electron-store": "^10.0.0",
     "ps-list": "^8.1.1"
   }

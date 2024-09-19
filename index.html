@@ -3,89 +3,313 @@
 <head>
   <meta charset="UTF-8" />
   <title>Script Watcher</title>
-  <!-- Include Bootstrap CSS -->
+  <!-- Include Font Awesome for icons -->
   <link
     rel="stylesheet"
-    href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
   />
+  <!-- Include Custom CSS -->
   <style>
+    /* Color Variables for Dark Theme */
+    :root {
+      --primary-bg-color: #313335;      /* Dark gray background */
+      --secondary-bg-color: #2b2b2b;    /* Sidebar background */
+      --text-color: #d6d6d6;            /* Light text color */
+      --accent-color: #0098ff;          /* Bright accent color */
+      --hover-bg-color: #3e4042;        /* Hover state background */
+    }
+
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
         Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: var(--primary-bg-color);
+      color: var(--text-color);
     }
-    .tab-content {
-      padding: 10px;
+
+    /* Sidebar Styling */
+    #sidebar {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      width: 80px;
+      background-color: var(--secondary-bg-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 20px;
     }
-    .nav-tabs {
-      margin-bottom: 0;
+
+    .sidebar-item {
+      width: 100%;
+      padding: 15px 0;
+      color: var(--text-color);
+      text-align: center;
+      cursor: pointer;
+      transition: background-color 0.3s;
     }
-    /* Add custom styles to make the app look more desktop-like */
-    .nav-tabs .nav-link {
+
+    .sidebar-item.active,
+    .sidebar-item:hover {
+      background-color: var(--hover-bg-color);
+    }
+
+    .sidebar-item i {
+      font-size: 24px;
+    }
+
+    .sidebar-item span {
+      display: block;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+
+    /* Main Content Area */
+    #main-content {
+      margin-left: 80px; /* Same as sidebar width */
+      padding: 20px;
+      background-color: var(--primary-bg-color);
+      /*height: 100vh; */
+      height: calc(100vh - 40px);
+      overflow-y: auto;
+    }
+
+    /* Process Table Styling */
+    .process-table {
+      width: 100%;
+      border-collapse: collapse;
+      color: var(--text-color);
+    }
+
+    .process-table th,
+    .process-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #4d4d4d;
+    }
+
+    .process-table th {
+      background-color: var(--secondary-bg-color);
+      text-align: left;
+    }
+
+    .process-table tr:hover {
+      background-color: var(--hover-bg-color);
+    }
+
+    .process-table input[type='checkbox'] {
+      transform: scale(1.2);
+    }
+
+    /* Window Controls */
+    .window-controls {
+      position: fixed;
+      top: 0;
+      right: 0;
+      display: flex;
+      background-color: var(--secondary-bg-color);
+    }
+
+    .window-controls button {
+      background: none;
       border: none;
-      color: #007bff;
+      color: var(--text-color);
+      padding: 10px;
+      cursor: pointer;
     }
-    .nav-tabs .nav-link.active {
-      color: black;
-      font-weight: bold;
+
+    .window-controls button:hover {
+      background-color: var(--hover-bg-color);
+    }
+
+    .window-controls i {
+      font-size: 12px;
+    }
+
+    /* Notification Styling */
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: var(--secondary-bg-color);
+      color: var(--text-color);
+      padding: 15px 20px;
+      border-radius: 5px;
+      display: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .notification.show {
+      display: block;
+      animation: fadeIn 0.3s, fadeOut 0.3s 4.7s;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    /* Preferences Styling */
+    .preferences-container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .preference-group {
+      margin-bottom: 20px;
+    }
+
+    .preference-label {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .preference-label input[type='checkbox'] {
+      margin-right: 10px;
+    }
+
+    input[type='text'] {
+      width: 100%;
+      padding: 10px;
+      background-color: var(--secondary-bg-color);
+      border: 1px solid #555;
+      border-radius: 5px;
+      color: var(--text-color);
+    }
+
+    .save-button {
+      padding: 10px 20px;
+      background-color: var(--accent-color);
+      border: none;
+      border-radius: 5px;
+      color: var(--primary-bg-color);
+      cursor: pointer;
+    }
+
+    .save-button:hover {
+      background-color: #007acc;
+    }
+
+    /* Search Bar Styling */
+    .search-container {
+      position: relative;
+      margin-bottom: 20px;
+      max-width: 100%;
+    }
+
+    #filter-input {
+      width: 100%;
+      padding: 10px 35px 10px 10px;
+      border: 1px solid #555;
+      border-radius: 5px;
+      background-color: var(--secondary-bg-color);
+      color: var(--text-color);
+      box-sizing: border-box;
+    }
+
+    .search-icon {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #a9b7c6;
+      pointer-events: none;
+    }
+
+    /* Tab Content Animations */
+    .tab-content {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .tab-content.active {
+      opacity: 1;
+      transform: translateY(0);
     }
   </style>
 </head>
 <body>
-  <ul class="nav nav-tabs">
-    <li class="nav-item">
-      <a class="nav-link active" href="#" id="tab-processes">Processes</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" href="#" id="tab-preferences">Preferences</a>
-    </li>
-  </ul>
-  <div class="tab-content">
-    <!-- Processes Tab -->
-    <div id="processes-tab">
-      <div class="form-group">
-        <input type="text" id="filter-input" class="form-control" placeholder="Filter by name" />
-      </div>
-      <table class="table table-striped" id="process-table">
-        <thead class="thead-dark">
+  <!-- Sidebar Navigation -->
+  <div id="sidebar">
+    <div class="sidebar-item active" data-tab="processes" aria-label="Processes" role="button" tabindex="0">
+      <i class="fas fa-tasks"></i>
+      <span>Processes</span>
+    </div>
+    <div class="sidebar-item" data-tab="preferences" aria-label="Preferences" role="button" tabindex="0">
+      <i class="fas fa-cog"></i>
+      <span>Preferences</span>
+    </div>
+    <!-- Add Quit App Button -->
+    <div class="sidebar-item" id="quit-app-button" aria-label="Quit App" role="button" tabindex="0">
+      <i class="fas fa-power-off"></i>
+      <span>Quit App</span>
+    </div>
+  </div>
+
+
+  <!-- Main Content Area -->
+  <div id="main-content">
+  <!-- Remove or comment out this block -->
+  <!--
+  <div class="window-controls">
+    <button id="minimize-button"><i class="fas fa-window-minimize"></i></button>
+    <button id="maximize-button"><i class="fas fa-window-maximize"></i></button>
+    <button id="close-button"><i class="fas fa-times"></i></button>
+  </div>
+  -->
+
+
+    <!-- Processes Tab Content -->
+    <div class="tab-content active" id="processes-tab">
+    <div class="search-container">
+      <input type="text" id="filter-input" placeholder="Filter by name..." />
+      <i class="fas fa-search search-icon"></i>
+    </div>
+
+      <table class="process-table">
+        <thead>
           <tr>
-            <th scope="col"></th>
-            <th scope="col">PID</th>
-            <th scope="col">Name</th>
-            <th scope="col">Command</th>
+            <th></th>
+            <th>PID</th>
+            <th>Name</th>
+            <th>Command</th>
           </tr>
         </thead>
-        <tbody>
-          <!-- Process rows will be inserted here -->
+        <tbody id="process-table-body">
+          <!-- Process rows will be dynamically inserted here -->
         </tbody>
       </table>
     </div>
 
-    <!-- Preferences Tab -->
-    <div id="preferences-tab" style="display: none;">
-      <div class="form-group">
-        <label>
-          <input type="checkbox" id="autoLaunch" /> Start at Login
-        </label>
+    <!-- Preferences Tab Content -->
+    <div class="tab-content" id="preferences-tab" style="display: none;">
+      <div class="preferences-container">
+        <h2>Preferences</h2>
+        <div class="preference-group">
+          <label class="preference-label">
+            <input type="checkbox" id="autoLaunch" />
+            Start at Login
+          </label>
+        </div>
+        <div class="preference-group">
+          <label for="prefilterRegex">Process Name Filter (Regex):</label>
+          <input type="text" id="prefilterRegex" placeholder="Enter regex pattern" />
+        </div>
+        <button id="savePreferences" class="save-button" aria-label="Save Preferences">Save</button>
       </div>
-      <div class="form-group">
-        <label for="prefilterRegex">Prefilter Regular Expression:</label>
-        <input
-          type="text"
-          id="prefilterRegex"
-          class="form-control"
-          placeholder="e.g., node|python|bash"
-        />
-        <small class="form-text text-muted">
-          Processes matching this regular expression will be displayed. Leave empty to show all processes.
-        </small>
-      </div>
-      <button id="savePreferences" class="btn btn-primary">Save</button>
     </div>
   </div>
 
-  <!-- Include Bootstrap JS (optional) -->
-  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <!-- Notification Container -->
+  <div id="notification" class="notification" role="alert">
+    <p id="notification-message"></p>
+  </div>
 
   <!-- Include renderer.js -->
   <script src="renderer.js"></script>
