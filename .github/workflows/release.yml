@@ -37,6 +37,10 @@ jobs:
         run: npm run lint
         continue-on-error: true
 
+      - name: Check formatting
+        run: npx prettier --check .
+        continue-on-error: true
+
       - name: Build the app
         run: npm run build
 

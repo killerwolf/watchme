@@ -78,18 +78,17 @@ We have several ideas for future improvements to WatchMe:
 
 1. **Cross-platform support**: Extend compatibility to Windows and Linux.
 2. **Advanced filtering options**: Implement more sophisticated process filtering capabilities.
-4. **Custom notification rules**: Allow users to set up complex notification rules based on process behavior.
-5. **Process grouping**: Enable users to group related processes for easier monitoring.
-7. **Remote monitoring**: Add the capability to monitor processes on remote machines.
-9. **Localization**: Add support for multiple languages.
-10. **Dark mode**: Implement a dark theme option for the user interface.
+3. **Custom notification rules**: Allow users to set up complex notification rules based on process behavior.
+4. **Process grouping**: Enable users to group related processes for easier monitoring.
+5. **Remote monitoring**: Add the capability to monitor processes on remote machines.
+6. **Localization**: Add support for multiple languages.
+7. **Dark mode**: Implement a dark theme option for the user interface.
 
 ## License
 
 WatchMe is released under the MIT License with an additional attribution requirement. See the [LICENSE](LICENSE) file for details.
 
 This license allows for free use, modification, and distribution of the software, but requires that any derivative work, documentation, or user interface clearly credits the original author, [@killerwolf].
-
 
 ## Support
 

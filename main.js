@@ -1,6 +1,11 @@
 // main.js
 import {
-  app, BrowserWindow, ipcMain, Tray, nativeImage, screen,
+  app,
+  BrowserWindow,
+  ipcMain,
+  Tray,
+  nativeImage,
+  screen,
 } from 'electron';
 import path from 'path';
 import psList from 'ps-list';
@@ -80,12 +85,17 @@ function showWindow() {
   const trayBounds = tray.getBounds();
 
   // Get the display nearest to the tray icon
-  const display = screen.getDisplayNearestPoint({ x: trayBounds.x, y: trayBounds.y });
+  const display = screen.getDisplayNearestPoint({
+    x: trayBounds.x,
+    y: trayBounds.y,
+  });
 
   const windowBounds = mainWindow.getBounds();
 
   // Calculate the x and y coordinates
-  let x = Math.round(trayBounds.x + trayBounds.width / 2 - windowBounds.width / 2);
+  let x = Math.round(
+    trayBounds.x + trayBounds.width / 2 - windowBounds.width / 2
+  );
   let y;
 
   if (process.platform === 'darwin') {
@@ -99,11 +109,11 @@ function showWindow() {
   // Ensure the window is within the bounds of the display
   x = Math.max(
     display.bounds.x,
-    Math.min(x, display.bounds.x + display.bounds.width - windowBounds.width),
+    Math.min(x, display.bounds.x + display.bounds.width - windowBounds.width)
   );
   y = Math.max(
     display.bounds.y,
-    Math.min(y, display.bounds.y + display.bounds.height - windowBounds.height),
+    Math.min(y, display.bounds.y + display.bounds.height - windowBounds.height)
   );
 
   mainWindow.setPosition(x, y, false);
