@@ -1,8 +1,9 @@
-# WatchMe
-
+![WatchMe Logo](misc/WatchMe-logo.png){ width="500" style="display: block; margin: 0 auto" }
 
 WatchMe is a powerful and user-friendly process monitoring tool designed to help you keep track of running processes on your system. With WatchMe, you can easily monitor specific processes and receive notifications when they end, ensuring you stay informed about your system's activity.
-![Demo](misc/WatchMe-Github.gif)
+
+![WatchMe Demo](misc/WatchMe-demo.gif)
+
 ## Features
 
 - Real-time process monitoring
@@ -75,12 +76,9 @@ We have several ideas for future improvements to WatchMe:
 
 1. **Cross-platform support**: Extend compatibility to Windows and Linux.
 2. **Advanced filtering options**: Implement more sophisticated process filtering capabilities.
-3. **Process resource usage monitoring**: Add the ability to track CPU and memory usage of monitored processes.
 4. **Custom notification rules**: Allow users to set up complex notification rules based on process behavior.
 5. **Process grouping**: Enable users to group related processes for easier monitoring.
-6. **Historical data and trends**: Implement a feature to view and analyze historical process data.
 7. **Remote monitoring**: Add the capability to monitor processes on remote machines.
-8. **Plugin system**: Develop a plugin architecture to allow for easy extensibility.
 9. **Localization**: Add support for multiple languages.
 10. **Dark mode**: Implement a dark theme option for the user interface.
 
