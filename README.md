@@ -1,7 +1,8 @@
 # WatchMe
 
-WatchMe is a powerful and user-friendly process monitoring tool designed to help you keep track of running processes on your system. With WatchMe, you can easily monitor specific processes and receive notifications when they end, ensuring you stay informed about your system's activity.
 
+WatchMe is a powerful and user-friendly process monitoring tool designed to help you keep track of running processes on your system. With WatchMe, you can easily monitor specific processes and receive notifications when they end, ensuring you stay informed about your system's activity.
+![Demo](misc/WatchMe-Github.gif)
 ## Features
 
 - Real-time process monitoring

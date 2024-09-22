@@ -115,7 +115,7 @@ function showWindow() {
 }
 
 function createTray() {
-  const iconPath = path.join(__dirname, 'tray-icon.png'); // Provide your icon path
+  const iconPath = path.join(__dirname, 'misc/tray-icon.png'); // Provide your icon path
   let trayIcon = nativeImage.createFromPath(iconPath);
 
   // Resize the icon to 16x16 pixels
