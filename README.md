@@ -1,4 +1,6 @@
-![WatchMe Logo](misc/WatchMe-logo.png){ width="500" style="display: block; margin: 0 auto" }
+<p align="center">
+  <img width="300px" src="https://raw.githubusercontent.com/killerwolf/watchme/refs/heads/main/misc/WatchMe-logo.png" alt="WatchMe Logo"/>
+</p>
 
 WatchMe is a powerful and user-friendly process monitoring tool designed to help you keep track of running processes on your system. With WatchMe, you can easily monitor specific processes and receive notifications when they end, ensuring you stay informed about your system's activity.
 
