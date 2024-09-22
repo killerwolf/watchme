@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <meta charset="UTF-8" />
@@ -140,7 +140,9 @@
 
       .notification.show {
         display: block;
-        animation: fadeIn 0.3s, fadeOut 0.3s 4.7s;
+        animation:
+          fadeIn 0.3s,
+          fadeOut 0.3s 4.7s;
       }
 
       @keyframes fadeIn {
@@ -235,7 +237,9 @@
       .tab-content {
         opacity: 0;
         transform: translateY(20px);
-        transition: opacity 0.3s ease, transform 0.3s ease;
+        transition:
+          opacity 0.3s ease,
+          transform 0.3s ease;
       }
 
       .tab-content.active {
