@@ -5,7 +5,10 @@ let monitoringInterval = null;
 
 function initialize() {
   // Initialize notifications
-  if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+  if (
+    Notification.permission !== 'granted' &&
+    Notification.permission !== 'denied'
+  ) {
     Notification.requestPermission();
   }
 
@@ -55,11 +58,13 @@ function initialize() {
   });
 
   // Enable keyboard navigation for the Quit App button
-  document.getElementById('quit-app-button').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      window.electronAPI.quitApp();
-    }
-  });
+  document
+    .getElementById('quit-app-button')
+    .addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        window.electronAPI.quitApp();
+      }
+    });
 
   // Initial tab
   activateTab('processes');
@@ -83,7 +88,9 @@ function activateTab(tabName) {
   document.querySelectorAll('.sidebar-item').forEach((item) => {
     item.classList.remove('active');
   });
-  document.querySelector(`.sidebar-item[data-tab="${tabName}"]`).classList.add('active');
+  document
+    .querySelector(`.sidebar-item[data-tab="${tabName}"]`)
+    .classList.add('active');
 
   if (tabName === 'processes') {
     listProcesses();
@@ -95,7 +102,8 @@ function activateTab(tabName) {
 function loadPreferences() {
   window.electronAPI.getPreferences().then((preferences) => {
     document.getElementById('autoLaunch').checked = preferences.autoLaunch;
-    document.getElementById('prefilterRegex').value = preferences.prefilterRegex || '';
+    document.getElementById('prefilterRegex').value =
+      preferences.prefilterRegex || '';
   });
 }
 
@@ -113,7 +121,9 @@ function savePreferences() {
 async function listProcesses() {
   const processes = await window.electronAPI.getProcesses();
 
-  const filterValue = document.getElementById('filter-input').value.toLowerCase();
+  const filterValue = document
+    .getElementById('filter-input')
+    .value.toLowerCase();
 
   // Get the prefilter regex from preferences
   const prefs = await window.electronAPI.getPreferences();
@@ -137,12 +147,14 @@ async function listProcesses() {
 
   // Filter processes based on the prefilter regex and filter input
   const scriptProcesses = processes.filter((proc) => {
-    const nameMatchesFilter = filterValue === ''
-      || proc.name.toLowerCase().includes(filterValue)
-      || proc.cmd.toLowerCase().includes(filterValue);
+    const nameMatchesFilter =
+      filterValue === '' ||
+      proc.name.toLowerCase().includes(filterValue) ||
+      proc.cmd.toLowerCase().includes(filterValue);
 
     if (prefilterPattern) {
-      const prefilterMatch = prefilterPattern.test(proc.name) || prefilterPattern.test(proc.cmd);
+      const prefilterMatch =
+        prefilterPattern.test(proc.name) || prefilterPattern.test(proc.cmd);
       return prefilterMatch && nameMatchesFilter;
     }
     return nameMatchesFilter;
@@ -180,7 +192,9 @@ async function listProcesses() {
         if (e.target.checked) {
           if (!monitoredProcesses.has(pid)) {
             monitoredProcesses.set(pid, processName);
-            console.log(`Added process ${processName} (PID ${pid}) to monitoring.`);
+            console.log(
+              `Added process ${processName} (PID ${pid}) to monitoring.`
+            );
             if (monitoringInterval === null) {
               startMonitoring();
             }
@@ -245,7 +259,7 @@ filterInput.addEventListener(
     if (filterInput.value.length >= 2 || filterInput.value.length === 0) {
       listProcesses();
     }
-  }, 300),
+  }, 300)
 );
 
 function startMonitoring() {
@@ -265,7 +279,9 @@ function startMonitoring() {
         monitoredProcesses.delete(pid);
 
         // Update the UI
-        const checkbox = document.querySelector(`input[type="checkbox"][value="${pid}"]`);
+        const checkbox = document.querySelector(
+          `input[type="checkbox"][value="${pid}"]`
+        );
         if (checkbox) {
           checkbox.checked = false;
           // Remove highlight
@@ -323,7 +339,9 @@ function updateMonitoringStatus() {
   // Send the number of monitored processes to main process
   window.electronAPI.updateTrayTooltip(monitoredProcesses.size);
   // Also send the monitoredProcesses map
-  window.electronAPI.updateMonitoredProcesses(Array.from(monitoredProcesses.entries()));
+  window.electronAPI.updateMonitoredProcesses(
+    Array.from(monitoredProcesses.entries())
+  );
 }
 
 // Initialize the app when the content is loaded
