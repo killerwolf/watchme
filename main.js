@@ -119,7 +119,7 @@ function createTray() {
   let trayIcon = nativeImage.createFromPath(iconPath);
 
   // Resize the icon to 16x16 pixels
-  trayIcon = trayIcon.resize({ width: 16, height: 16 });
+  trayIcon = trayIcon.resize({ width: 16, height: 12 });
 
   if (process.platform === 'darwin') {
     trayIcon.setTemplateImage(true);
