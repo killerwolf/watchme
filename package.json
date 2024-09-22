@@ -6,11 +6,13 @@
   "type": "module",
   "scripts": {
     "build": "electron-builder",
-    "start": "electron ."
+    "start": "electron .",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT License with Attribution Requirement",
   "build": {
     "files": [
       "**/*",
@@ -46,7 +48,10 @@
   },
   "devDependencies": {
     "electron": "^32.1.0",
-    "electron-builder": "^25.0.5"
+    "electron-builder": "^25.0.5",
+    "eslint": "^8.56.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.29.1"
   },
   "dependencies": {
     "@electron/remote": "^2.1.2",

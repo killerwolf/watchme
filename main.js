@@ -1,15 +1,17 @@
 // main.js
-import { app, BrowserWindow, ipcMain, Tray, nativeImage, screen } from 'electron';
+import {
+  app, BrowserWindow, ipcMain, Tray, nativeImage, screen,
+} from 'electron';
 import path from 'path';
 import psList from 'ps-list';
 import Store from 'electron-store';
-import { initialize, enable } from '@electron/remote/main/index.js'; // Adjusted import
+import { initialize, enable } from '@electron/remote/main/index.js';
+
+// Define __dirname in ES modules
+import { fileURLToPath } from 'url'; // Adjusted import
 
 // Initialize @electron/remote
 initialize();
-
-// Define __dirname in ES modules
-import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -97,11 +99,11 @@ function showWindow() {
   // Ensure the window is within the bounds of the display
   x = Math.max(
     display.bounds.x,
-    Math.min(x, display.bounds.x + display.bounds.width - windowBounds.width)
+    Math.min(x, display.bounds.x + display.bounds.width - windowBounds.width),
   );
   y = Math.max(
     display.bounds.y,
-    Math.min(y, display.bounds.y + display.bounds.height - windowBounds.height)
+    Math.min(y, display.bounds.y + display.bounds.height - windowBounds.height),
   );
 
   mainWindow.setPosition(x, y, false);
@@ -138,9 +140,7 @@ ipcMain.handle('get-processes', async () => {
   return processes;
 });
 
-ipcMain.handle('get-preferences', () => {
-  return preferences;
-});
+ipcMain.handle('get-preferences', () => preferences);
 
 ipcMain.on('save-preferences', (event, newPreferences) => {
   preferences = { ...preferences, ...newPreferences };

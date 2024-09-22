@@ -1,14 +1,13 @@
 // renderer.js
 
-let monitoredProcesses = new Map();
+const monitoredProcesses = new Map();
 let monitoringInterval = null;
 
 function initialize() {
-
-    // Initialize notifications
-    if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-      Notification.requestPermission();
-    }
+  // Initialize notifications
+  if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+    Notification.requestPermission();
+  }
 
   // Sidebar Navigation Event Listeners
   document.querySelectorAll('.sidebar-item').forEach((item) => {
@@ -62,8 +61,8 @@ function initialize() {
     }
   });
 
-    // Initial tab
-    activateTab('processes');
+  // Initial tab
+  activateTab('processes');
 }
 
 function activateTab(tabName) {
@@ -118,7 +117,7 @@ async function listProcesses() {
 
   // Get the prefilter regex from preferences
   const prefs = await window.electronAPI.getPreferences();
-  const prefilterRegex = prefs.prefilterRegex;
+  const { prefilterRegex } = prefs;
   console.log('Prefilter Regex:', prefilterRegex);
 
   let prefilterPattern = null;
@@ -138,18 +137,15 @@ async function listProcesses() {
 
   // Filter processes based on the prefilter regex and filter input
   const scriptProcesses = processes.filter((proc) => {
-    const nameMatchesFilter =
-      filterValue === '' ||
-      proc.name.toLowerCase().includes(filterValue) ||
-      proc.cmd.toLowerCase().includes(filterValue);
+    const nameMatchesFilter = filterValue === ''
+      || proc.name.toLowerCase().includes(filterValue)
+      || proc.cmd.toLowerCase().includes(filterValue);
 
     if (prefilterPattern) {
-      const prefilterMatch =
-        prefilterPattern.test(proc.name) || prefilterPattern.test(proc.cmd);
+      const prefilterMatch = prefilterPattern.test(proc.name) || prefilterPattern.test(proc.cmd);
       return prefilterMatch && nameMatchesFilter;
-    } else {
-      return nameMatchesFilter;
     }
+    return nameMatchesFilter;
   });
 
   const processTableBody = document.querySelector('#process-table-body');
@@ -249,7 +245,7 @@ filterInput.addEventListener(
     if (filterInput.value.length >= 2 || filterInput.value.length === 0) {
       listProcesses();
     }
-  }, 300)
+  }, 300),
 );
 
 function startMonitoring() {
@@ -293,7 +289,7 @@ function startMonitoring() {
 
 function notifyProcessEnded(pid, processName) {
   console.log(`Process "${processName}" (PID ${pid}) has ended.`);
-  
+
   // Display a desktop notification
   if (Notification.permission === 'granted') {
     new Notification('Process Ended', {
