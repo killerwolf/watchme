@@ -23,7 +23,7 @@ on:
           - linux
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
   ELECTRON_CACHE: '~/.cache/electron'
   ELECTRON_BUILDER_CACHE: '~/.cache/electron-builder'
 
@@ -34,7 +34,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        node-version: [20]
+        node-version: [22]
 
     steps:
       - name: Checkout code
