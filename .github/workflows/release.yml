@@ -33,7 +33,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
         node-version: [22]
 
     steps:
@@ -68,8 +68,6 @@ jobs:
         include:
           - os: macos-latest
             platform: mac
-          - os: windows-latest
-            platform: win
           - os: ubuntu-latest
             platform: linux
 
