@@ -169,9 +169,9 @@ ipcMain.on('update-tray-tooltip', (event, numProcesses) => {
   tray.setToolTip(tooltip);
 });
 
-ipcMain.on('update-monitored-processes', (event, monitoredPIDs) => {
-  // You can handle monitored processes here if needed
-});
+//ipcMain.on('update-monitored-processes', (event, monitoredPIDs) => {
+// You can handle monitored processes here if needed
+//});
 
 // Handle window control actions
 ipcMain.on('window-control', (event, action) => {
