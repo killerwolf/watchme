@@ -3,6 +3,83 @@
 const monitoredProcesses = new Map();
 let monitoringInterval = null;
 
+// Simple logging utility - disabled in production
+const logger = {
+  debug: () => {
+    // Disabled to avoid console warnings
+  },
+  error: (...args) => {
+    // eslint-disable-next-line no-console
+    console.error('[WatchMe Error]', ...args);
+  },
+};
+
+// Enhanced notification system to replace alerts
+function showNotification(message, type = 'info') {
+  // Try to use desktop notifications first
+  if (Notification.permission === 'granted') {
+    new Notification('WatchMe', {
+      body: message,
+      icon: 'misc/tray-icon.png',
+    });
+  } else if (Notification.permission !== 'denied') {
+    // Request permission and show notification
+    Notification.requestPermission().then((permission) => {
+      if (permission === 'granted') {
+        new Notification('WatchMe', {
+          body: message,
+          icon: 'misc/tray-icon.png',
+        });
+      } else {
+        // Fallback to a more user-friendly alert alternative
+        showFallbackNotification(message, type);
+      }
+    });
+  } else {
+    // Fallback when notifications are denied
+    showFallbackNotification(message, type);
+  }
+}
+
+// Fallback notification when desktop notifications are not available
+function showFallbackNotification(message, type) {
+  // Create a custom notification element
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}`;
+  notification.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <span style="font-size: 18px;">${type === 'error' ? '⚠️' : 'ℹ️'}</span>
+      <span>${message}</span>
+    </div>
+  `;
+
+  // Style the notification
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: ${type === 'error' ? '#ff4444' : '#0098ff'};
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 10000;
+    max-width: 400px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+  `;
+
+  document.body.appendChild(notification);
+
+  // Auto-remove after 5 seconds
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.parentNode.removeChild(notification);
+    }
+  }, 5000);
+}
+
 function initialize() {
   // Initialize notifications
   if (
@@ -118,6 +195,16 @@ function savePreferences() {
   }
 }
 
+// Listen for preferences saved response
+window.electronAPI.onPreferencesSaved((event, response) => {
+  if (response.success) {
+    showNotification(
+      response.message,
+      response.loginItemSuccess ? 'info' : 'warning'
+    );
+  }
+});
+
 async function listProcesses() {
   const processes = await window.electronAPI.getProcesses();
 
@@ -128,21 +215,24 @@ async function listProcesses() {
   // Get the prefilter regex from preferences
   const prefs = await window.electronAPI.getPreferences();
   const { prefilterRegex } = prefs;
-  console.log('Prefilter Regex:', prefilterRegex);
+  logger.debug('Prefilter Regex:', prefilterRegex);
 
   let prefilterPattern = null;
 
   if (prefilterRegex && prefilterRegex.trim() !== '') {
     try {
       prefilterPattern = new RegExp(prefilterRegex.trim(), 'i'); // 'i' for case-insensitive
-      console.log('Prefilter Pattern:', prefilterPattern);
+      logger.debug('Prefilter Pattern:', prefilterPattern);
     } catch (e) {
-      console.error('Invalid prefilter regex:', e);
-      alert('Invalid prefilter regular expression in preferences.');
+      logger.error('Invalid prefilter regex:', e);
+      showNotification(
+        'Invalid prefilter regular expression in preferences.',
+        'error'
+      );
       return;
     }
   } else {
-    console.log('No prefilter regex provided; displaying all processes.');
+    logger.debug('No prefilter regex provided; displaying all processes.');
   }
 
   // Filter processes based on the prefilter regex and filter input
@@ -192,7 +282,7 @@ async function listProcesses() {
         if (e.target.checked) {
           if (!monitoredProcesses.has(pid)) {
             monitoredProcesses.set(pid, processName);
-            console.log(
+            logger.debug(
               `Added process ${processName} (PID ${pid}) to monitoring.`
             );
             if (monitoringInterval === null) {
@@ -201,7 +291,7 @@ async function listProcesses() {
           }
         } else {
           monitoredProcesses.delete(pid);
-          console.log(`Removed process (PID ${pid}) from monitoring.`);
+          logger.debug(`Removed process (PID ${pid}) from monitoring.`);
           if (monitoredProcesses.size === 0 && monitoringInterval !== null) {
             clearInterval(monitoringInterval);
             monitoringInterval = null;
@@ -304,7 +394,7 @@ function startMonitoring() {
 }
 
 function notifyProcessEnded(pid, processName) {
-  console.log(`Process "${processName}" (PID ${pid}) has ended.`);
+  logger.debug(`Process "${processName}" (PID ${pid}) has ended.`);
 
   // Display a desktop notification
   if (Notification.permission === 'granted') {
@@ -318,12 +408,18 @@ function notifyProcessEnded(pid, processName) {
           body: `Process "${processName}" (PID ${pid}) has ended.`,
         });
       } else {
-        alert(`Process "${processName}" (PID ${pid}) has ended.`);
+        showNotification(
+          `Process "${processName}" (PID ${pid}) has ended.`,
+          'info'
+        );
       }
     });
   } else {
     // If permission was denied
-    alert(`Process "${processName}" (PID ${pid}) has ended.`);
+    showNotification(
+      `Process "${processName}" (PID ${pid}) has ended.`,
+      'info'
+    );
   }
 
   // Play a sound notification

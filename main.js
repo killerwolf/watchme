@@ -156,9 +156,26 @@ ipcMain.on('save-preferences', (event, newPreferences) => {
   preferences = { ...preferences, ...newPreferences };
   store.set('preferences', preferences); // Save to store
 
-  // Apply settings
-  app.setLoginItemSettings({
-    openAtLogin: preferences.autoLaunch,
+  // Apply settings with error handling
+  let loginItemSuccess = true;
+  try {
+    app.setLoginItemSettings({
+      openAtLogin: preferences.autoLaunch,
+    });
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to set login item settings:', error);
+    loginItemSuccess = false;
+    // Continue execution - this is not critical for app functionality
+  }
+
+  // Send response back to renderer
+  event.reply('preferences-saved', {
+    success: true,
+    loginItemSuccess,
+    message: loginItemSuccess
+      ? 'Preferences saved successfully!'
+      : 'Preferences saved, but login item setting failed. You may need to grant permission in System Preferences.',
   });
 });
 
@@ -169,9 +186,9 @@ ipcMain.on('update-tray-tooltip', (event, numProcesses) => {
   tray.setToolTip(tooltip);
 });
 
-ipcMain.on('update-monitored-processes', (event, monitoredPIDs) => {
-  // You can handle monitored processes here if needed
-});
+//ipcMain.on('update-monitored-processes', (event, monitoredPIDs) => {
+// You can handle monitored processes here if needed
+//});
 
 // Handle window control actions
 ipcMain.on('window-control', (event, action) => {
