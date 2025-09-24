@@ -19,8 +19,6 @@ on:
         options:
           - all
           - mac
-          - win
-          - linux
 
 env:
   NODE_VERSION: '22'
@@ -68,8 +66,6 @@ jobs:
         include:
           - os: macos-latest
             platform: mac
-          - os: ubuntu-latest
-            platform: linux
 
     steps:
       - name: Checkout code
@@ -89,6 +85,19 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Clear electron-builder cache (Linux only)
+        if: matrix.platform == 'linux'
+        run: |
+          rm -rf ~/.cache/electron-builder
+          rm -rf ~/.cache/electron
+          npm cache clean --force
+
+      - name: Install 7-Zip (Linux only)
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y p7zip-full
 
       - name: Build for ${{ matrix.platform }}
         run: |
