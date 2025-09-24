@@ -88,8 +88,8 @@
       "category": "public.app-category.utilities",
       "artifactName": "${productName}-${version}-${arch}.${ext}",
       "hardenedRuntime": true,
-      "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist",
+      "entitlements": "assets/build/entitlements.mac.plist",
+      "entitlementsInherit": "assets/build/entitlements.mac.plist",
       "gatekeeperAssess": false,
       "notarize": false
     },
@@ -144,7 +144,7 @@
     "dmg": {
       "title": "WatchMe ${version}",
       "icon": "assets/icon.icns",
-      "background": "build/background.png",
+      "background": "assets/build/background.png",
       "contents": [
         {
           "x": 130,
