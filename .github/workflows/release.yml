@@ -108,6 +108,8 @@ jobs:
           elif [ "${{ matrix.platform }}" = "linux" ]; then
             npm run build:linux
           fi
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
