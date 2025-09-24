@@ -1,19 +1,19 @@
+import path from 'node:path';
+import { enable, initialize } from '@electron/remote/main/index.js';
 // main.js
 import {
-  app,
   BrowserWindow,
-  ipcMain,
   Tray,
+  app,
+  ipcMain,
   nativeImage,
   screen,
 } from 'electron';
-import path from 'path';
-import psList from 'ps-list';
 import Store from 'electron-store';
-import { initialize, enable } from '@electron/remote/main/index.js';
+import psList from 'ps-list';
 
 // Define __dirname in ES modules
-import { fileURLToPath } from 'url'; // Adjusted import
+import { fileURLToPath } from 'node:url'; // Adjusted import
 
 // Initialize @electron/remote
 initialize();
@@ -179,7 +179,7 @@ ipcMain.on('save-preferences', (event, newPreferences) => {
   });
 });
 
-ipcMain.on('update-tray-tooltip', (event, numProcesses) => {
+ipcMain.on('update-tray-tooltip', (_event, numProcesses) => {
   const tooltip = `Script Watcher - Monitoring ${numProcesses} process${
     numProcesses === 1 ? '' : 'es'
   }`;
@@ -191,7 +191,7 @@ ipcMain.on('update-tray-tooltip', (event, numProcesses) => {
 //});
 
 // Handle window control actions
-ipcMain.on('window-control', (event, action) => {
+ipcMain.on('window-control', (_event, action) => {
   switch (action) {
     case 'minimize':
       mainWindow.minimize();

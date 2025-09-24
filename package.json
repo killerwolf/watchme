@@ -27,10 +27,12 @@
     "dist": "npm run build",
     "pack": "electron-builder --dir",
     "publish": "electron-builder --publish=always",
-    "lint": "eslint . --ext .js",
-    "lint:fix": "eslint . --ext .js --fix && npm run format",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
     "clean": "rimraf dist",
     "postinstall": "electron-builder install-app-deps"
   },
@@ -63,26 +65,18 @@
       {
         "from": "misc/",
         "to": "misc/",
-        "filter": [
-          "**/*"
-        ]
+        "filter": ["**/*"]
       }
     ],
     "mac": {
       "target": [
         {
           "target": "dmg",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
+          "arch": ["x64", "arm64"]
         },
         {
           "target": "zip",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
+          "arch": ["x64", "arm64"]
         }
       ],
       "category": "public.app-category.utilities",
@@ -97,17 +91,11 @@
       "target": [
         {
           "target": "nsis",
-          "arch": [
-            "x64",
-            "ia32"
-          ]
+          "arch": ["x64", "ia32"]
         },
         {
           "target": "portable",
-          "arch": [
-            "x64",
-            "ia32"
-          ]
+          "arch": ["x64", "ia32"]
         }
       ],
       "artifactName": "${productName}-${version}-${arch}.${ext}",
@@ -117,17 +105,11 @@
       "target": [
         {
           "target": "AppImage",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
+          "arch": ["x64", "arm64"]
         },
         {
           "target": "deb",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
+          "arch": ["x64", "arm64"]
         }
       ],
       "category": "Utility",
@@ -167,12 +149,7 @@
   "devDependencies": {
     "electron": "^32.1.0",
     "electron-builder": "^25.0.5",
-    "eslint": "^8.56.0",
-    "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-prettier": "^5.2.1",
-    "prettier": "^3.3.3",
+    "@biomejs/biome": "^1.8.4",
     "rimraf": "^5.0.5"
   },
   "dependencies": {
