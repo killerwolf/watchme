@@ -415,15 +415,14 @@ function notifyProcessEnded(pid, processName) {
 }
 
 function playNotificationSound() {
-  // ATTENTION : notification-sound.mp3 n'existe pas dans le depot. Cette
-  // fonction est donc muette, alors que le README annonce des "Sound alerts".
-  // Le .catch() ne fait que supprimer la promesse rejetee a chaque fin de
-  // processus surveille ; il ne repare pas la fonctionnalite.
-  // L'arbitrage (fournir le fichier ou retirer la fonctionnalite) est
-  // suivi dans l'issue #17.
-  const audio = new Audio('notification-sound.mp3');
+  // Genere par tools/build-notification-sound.mjs (`npm run sound:build`).
+  // Du WAV et non du MP3 : lu nativement par Chromium, sans dependance a
+  // un codec ni a un encodeur au moment du build.
+  const audio = new Audio('misc/notification-sound.wav');
   audio.play().catch((error) => {
-    logger.error('Notification sound unavailable:', error);
+    // La lecture peut etre refusee si l'utilisateur n'a pas encore
+    // interagi avec la fenetre : ce n'est pas une erreur fatale.
+    logger.error('Notification sound could not be played:', error);
   });
 }
 

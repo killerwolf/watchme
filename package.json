@@ -24,6 +24,7 @@
     "test:electron": "electron test/harness/electron-entry.js",
     "verify:pack": "electron test/harness/packaged-app.js",
     "icon:build": "rsvg-convert -w 1024 -h 1024 assets/icon.svg -o assets/icon.png",
+    "sound:build": "node tools/build-notification-sound.mjs",
     "build": "electron-builder",
     "build:mac": "electron-builder --mac",
     "build:win": "electron-builder --win",
@@ -81,7 +82,8 @@
       "!.nvmrc",
       "!.npmrc",
       "!misc/WatchMe-demo.gif",
-      "!misc/WatchMe-logo.png"
+      "!misc/WatchMe-logo.png",
+      "!tools"
     ],
     "mac": {
       "target": [

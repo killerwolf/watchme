@@ -172,6 +172,27 @@ check(
     );
     assert.equal(offline.unsized, 0, 'une icone a une largeur nulle');
 
+    // Le son de notification doit se charger DANS le renderer (cf. #17) :
+    // le chemin doit resoudre et la CSP autoriser media-src.
+    const sound = await win.webContents.executeJavaScript(`
+      new Promise((resolve) => {
+        const audio = new Audio('misc/notification-sound.wav');
+        audio.addEventListener('loadedmetadata', () =>
+          resolve({ ok: true, duration: audio.duration })
+        );
+        audio.addEventListener('error', () =>
+          resolve({ ok: false, code: audio.error && audio.error.code })
+        );
+        setTimeout(() => resolve({ ok: false, code: 'timeout' }), 4000);
+      })
+    `);
+    assert.equal(
+      sound.ok,
+      true,
+      `le son de notification ne se charge pas (code ${sound.code})`
+    );
+    assert.ok(sound.duration > 0.5, 'duree du son inattendue');
+
     win.destroy();
     ipcMain.removeHandler('get-processes');
     ipcMain.removeHandler('get-preferences');
