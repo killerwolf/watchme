@@ -181,7 +181,8 @@
     "publish": {
       "provider": "github",
       "owner": "killerwolf",
-      "repo": "watchme"
+      "repo": "watchme",
+      "releaseType": "release"
     }
   },
   "devDependencies": {
