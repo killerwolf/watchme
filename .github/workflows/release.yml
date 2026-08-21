@@ -93,8 +93,52 @@ jobs:
             echo "release_type=release" >> "$GITHUB_OUTPUT"
           fi
 
-      # C'est electron-builder qui publie ce qu'il vient de construire, plutot
-      # qu'un job separe qui retelechargerait les artefacts pour les reposter.
+      # La release est creee ICI, avant le build, et c est delibere.
+      #
+      # electron-builder lance un publieur par architecture, en parallele.
+      # Si la release n'existe pas encore, les deux essaient de la creer en
+      # meme temps : le premier gagne, le second recoit un
+      # "422 already_exists" qui fait echouer toutes ses mises en ligne.
+      # Constate sur v0.11.1-rc.1 : 1 fichier publie sur 8, 14 erreurs.
+      #
+      # En la creant au prealable, les deux publieurs la trouvent et se
+      # contentent d'y deposer leurs fichiers. Il n'y a plus rien a courir.
+      - name: Create GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          tag="${{ github.ref_name }}"
+
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "La release $tag existe deja, elle sera reutilisee."
+            exit 0
+          fi
+
+          args=(--title "$tag")
+          if [ "${{ steps.channel.outputs.release_type }}" = "prerelease" ]; then
+            args+=(--prerelease)
+          fi
+
+          # Le CHANGELOG dit le pourquoi des changements, ce qu'une liste de
+          # commits ne fait pas. A defaut de section, on retombe sur les
+          # notes generees par GitHub.
+          version="${tag#v}"
+          notes=$(awk -v v="$version" '
+            $0 ~ "^## \\[" v "\\]" { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md)
+
+          if [ -n "$(echo "$notes" | tr -d '[:space:]')" ]; then
+            printf '%s\n' "$notes" > /tmp/release-notes.md
+            args+=(--notes-file /tmp/release-notes.md)
+          else
+            echo "Aucune section CHANGELOG pour $version, notes generees."
+            args+=(--generate-notes)
+          fi
+
+          gh release create "$tag" "${args[@]}"
+
+      # electron-builder depose ses artefacts dans la release ci-dessus.
       #
       # Deux precautions :
       #  - on ne publie que sur un tag. `workflow_dispatch` sert a verifier un
@@ -110,28 +154,6 @@ jobs:
           else
             npm run build:mac -- --publish never
           fi
-
-      # electron-builder publie les binaires mais laisse le corps de la release
-      # vide. On y met la section correspondante du CHANGELOG, qui dit le
-      # pourquoi des changements — ce qu'une liste de commits ne fait pas.
-      - name: Fill release notes from CHANGELOG
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          version="${{ github.ref_name }}"
-          version="${version#v}"
-          notes=$(awk -v v="$version" '
-            $0 ~ "^## \\[" v "\\]" { found = 1; next }
-            found && /^## \[/ { exit }
-            found { print }
-          ' CHANGELOG.md)
-
-          if [ -z "$(echo "$notes" | tr -d '[:space:]')" ]; then
-            echo "Aucune section CHANGELOG pour $version, corps laisse tel quel."
-            exit 0
-          fi
-
-          printf '%s\n' "$notes" > /tmp/release-notes.md
-          gh release edit "${{ github.ref_name }}" --notes-file /tmp/release-notes.md
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
