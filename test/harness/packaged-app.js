@@ -60,6 +60,15 @@ app.whenReady().then(() => {
     failures.push("index.html absent de l'asar");
   }
 
+  // Le son de notification doit atteindre l'asar : le renderer le charge
+  // par un chemin relatif a index.html (cf. issue #17). Une exclusion trop
+  // large dans `files` le ferait disparaitre en silence.
+  if (!existsSync(path.join(asar, 'misc/notification-sound.wav'))) {
+    failures.push(
+      "son de notification absent de l'asar : l'alerte sera muette"
+    );
+  }
+
   // Icone de l'application (cf. issue #31). Sans `mac.icon`, electron-builder
   // ne previent que par un avertissement facile a manquer dans les logs de
   // build, et livre electron.icns : l'app porte alors l'icone generique
