@@ -9,7 +9,7 @@
 // Lance via `npx electron test/harness/electron-entry.js`.
 
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -203,6 +203,34 @@ check('electron-store fait un round-trip sur la forme des preferences', () => {
   assert.ok(store.path.endsWith('.json'), 'le store doit etre un fichier JSON');
 
   store.clear();
+});
+
+check('electron-store relit un fichier de config pre-existant', () => {
+  // Garde-fou de migration (cf. issue #15). Les preferences d'un
+  // utilisateur existant ne doivent jamais etre perdues par une montee de
+  // version d'electron-store. On ecrit un fichier a la main, dans le format
+  // historique, puis on verifie qu'un Store neuf le relit tel quel.
+  const name = 'watchme-migration-probe';
+  const file = path.join(app.getPath('userData'), `${name}.json`);
+  const existing = {
+    preferences: { autoLaunch: true, prefilterRegex: '^node' },
+  };
+
+  writeFileSync(file, `${JSON.stringify(existing, null, '\t')}\n`);
+
+  const store = new Store({ name });
+  assert.deepEqual(
+    store.get('preferences'),
+    existing.preferences,
+    'les preferences d un utilisateur existant ne sont pas relues'
+  );
+  assert.equal(
+    store.path,
+    file,
+    'le chemin du fichier de config a change : les utilisateurs perdraient leurs reglages'
+  );
+
+  rmSync(file, { force: true });
 });
 
 check('app.setLoginItemSettings() est appelable', () => {

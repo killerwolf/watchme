@@ -187,7 +187,7 @@
     "rimraf": "^5.0.5"
   },
   "dependencies": {
-    "electron-store": "^10.0.0",
+    "electron-store": "^11.0.2",
     "ps-list": "^8.1.1"
   }
 }
