@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>WatchMe</title>
+
+  <defs>
+    <!-- Fond reprenant la palette sombre de l'interface :
+         secondary-bg-color en bas, hover-bg-color en haut. -->
+    <linearGradient id="chrome" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#43464a" />
+      <stop offset="1" stop-color="#232527" />
+    </linearGradient>
+
+    <!-- Degrade de l'iris, autour de l accent-color #0098ff. -->
+    <radialGradient id="iris" cx="0.38" cy="0.32" r="0.85">
+      <stop offset="0" stop-color="#5cc2ff" />
+      <stop offset="0.55" stop-color="#0098ff" />
+      <stop offset="1" stop-color="#0062c4" />
+    </radialGradient>
+
+    <!-- L'oeil du logo : deux arcs symetriques formant une amande. -->
+    <path id="almond" d="M 112 512 C 322 224 702 224 912 512 C 702 800 322 800 112 512 Z" />
+
+    <!-- Le blanc de l'oeil sert de fenetre : tout ce qui est dessine
+         ensuite est detoure par l'amande. -->
+    <clipPath id="eye">
+      <use href="#almond" />
+    </clipPath>
+
+    <!-- L'echancrure du logo : un disque soustrait en haut a droite de la
+         pupille, qui lui donne sa forme de croissant. -->
+    <mask id="crescent">
+      <rect width="1024" height="1024" fill="black" />
+      <circle cx="512" cy="512" r="172" fill="white" />
+      <circle cx="606" cy="428" r="112" fill="black" />
+    </mask>
+  </defs>
+
+  <!-- Plaque -->
+  <rect x="72" y="72" width="880" height="880" rx="196" fill="url(#chrome)" />
+  <rect x="72" y="72" width="880" height="880" rx="196" fill="none"
+        stroke="#ffffff" stroke-opacity="0.10" stroke-width="4" />
+
+  <!-- Blanc de l'oeil -->
+  <use href="#almond" fill="#f4f7fa" />
+
+  <!-- Iris, detoure par l'amande pour ne jamais deborder -->
+  <g clip-path="url(#eye)">
+    <circle cx="512" cy="512" r="258" fill="url(#iris)" />
+  </g>
+
+  <!-- Pupille en croissant -->
+  <circle cx="512" cy="512" r="172" fill="#12161a" mask="url(#crescent)" />
+
+  <!-- Reflet -->
+  <circle cx="428" cy="440" r="52" fill="#ffffff" fill-opacity="0.95" />
+
+  <!-- Trait de contour de l'oeil, comme sur le logo -->
+  <use href="#almond" fill="none" stroke="#12161a" stroke-width="38" stroke-linejoin="round" />
+</svg>

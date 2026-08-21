@@ -415,8 +415,15 @@ function notifyProcessEnded(pid, processName) {
 }
 
 function playNotificationSound() {
-  const audio = new Audio('notification-sound.mp3'); // Ensure you have this file in your project's directory
-  audio.play();
+  // Genere par tools/build-notification-sound.mjs (`npm run sound:build`).
+  // Du WAV et non du MP3 : lu nativement par Chromium, sans dependance a
+  // un codec ni a un encodeur au moment du build.
+  const audio = new Audio('misc/notification-sound.wav');
+  audio.play().catch((error) => {
+    // La lecture peut etre refusee si l'utilisateur n'a pas encore
+    // interagi avec la fenetre : ce n'est pas une erreur fatale.
+    logger.error('Notification sound could not be played:', error);
+  });
 }
 
 function updateMonitoringStatus() {

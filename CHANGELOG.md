@@ -5,7 +5,29 @@ Toutes les évolutions notables de WatchMe sont consignées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/),
 et le projet respecte le [versionnage sémantique](https://semver.org/lang/fr/).
 
-## [Non publié]
+## [0.11.0] - 2026-08-21
+
+### Ajouté
+
+- **Le son de notification existe enfin.** `renderer.js` référençait un
+  `notification-sound.mp3` absent du dépôt : la fonctionnalité annoncée par le
+  README n'a jamais émis un son. Remplacé par une courte fanfare de fin de
+  style Super Nintendo, générée par `tools/build-notification-sound.mjs`
+  (`npm run sound:build`) et livrée en WAV — lu nativement par Chromium, sans
+  dépendance à un codec. (#17)
+- **L'application a sa propre icône.** Elle portait celle d'Electron par
+  défaut, `mac.icon` n'étant pas déclaré — et `assets/icon.png` ne contenait
+  pas le logo WatchMe mais une icône générique sans rapport. Nouvelle icône
+  dessinée en SVG à partir de l'œil du logo, dans la palette de l'interface.
+  `assets/icon.svg` est la source, `npm run icon:build` en produit le PNG.
+  (#31)
+
+### Modifié
+
+- `verify:pack` couvre désormais l'icône de l'application et la présence du
+  son dans l'asar, en plus de l'icône du tray.
+
+## [0.10.0] - 2026-08-21
 
 Ce lot est une reprise de maintenance après onze mois sans commit. Il a été
 mené sous une contrainte explicite : **ne modifier aucune fonctionnalité
@@ -68,10 +90,6 @@ détaillées plus bas — l'icône du tray et le fonctionnement hors-ligne.
 
 ### Connu, non traité
 
-- Le son de notification pointe sur un fichier absent du dépôt. La promesse
-  rejetée est désormais rattrapée, mais la fonctionnalité reste muette alors
-  que le README l'annonce. (#17)
-- L'application livrée porte l'icône générique d'Electron. (#31)
 - Le tray et le titre de fenêtre affichent encore « Script Watcher ». (#18)
 - `ps-list` reste en 8.x : la majeure ne corrige aucune vulnérabilité et
   toucherait l'affichage des processus. (#16)
