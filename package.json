@@ -23,6 +23,7 @@
     "test:unit": "node --test test/*.test.js",
     "test:electron": "electron test/harness/electron-entry.js",
     "verify:pack": "electron test/harness/packaged-app.js",
+    "icon:build": "rsvg-convert -w 1024 -h 1024 assets/icon.svg -o assets/icon.png",
     "build": "electron-builder",
     "build:mac": "electron-builder --mac",
     "build:win": "electron-builder --win",
@@ -100,6 +101,7 @@
         }
       ],
       "category": "public.app-category.utilities",
+      "icon": "assets/icon.png",
       "artifactName": "${productName}-${version}-${arch}.${ext}",
       "hardenedRuntime": true,
       "entitlements": "assets/build/entitlements.mac.plist",
