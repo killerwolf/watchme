@@ -1,7 +1,6 @@
 import path from 'node:path';
 // Define __dirname in ES modules
 import { fileURLToPath } from 'node:url'; // Adjusted import
-import { enable, initialize } from '@electron/remote/main/index.js';
 // main.js
 import {
   app,
@@ -14,8 +13,6 @@ import {
 import Store from 'electron-store';
 import psList from 'ps-list';
 
-// Initialize @electron/remote
-initialize();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -52,9 +49,6 @@ function createWindow() {
   });
 
   mainWindow.loadFile('index.html');
-
-  // Enable @electron/remote in the renderer process
-  enable(mainWindow.webContents);
 
   // Hide the window instead of closing when the close button is clicked
   mainWindow.on('close', (event) => {
