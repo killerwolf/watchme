@@ -22,6 +22,7 @@
     "test": "npm run test:unit && npm run test:electron",
     "test:unit": "node --test test/*.test.js",
     "test:electron": "electron test/harness/electron-entry.js",
+    "verify:pack": "electron test/harness/packaged-app.js",
     "build": "electron-builder",
     "build:mac": "electron-builder --mac",
     "build:win": "electron-builder --win",
@@ -71,16 +72,15 @@
       "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
       "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
       "!**/{appveyor.yml,.travis.yml,circle.yml}",
-      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}"
-    ],
-    "extraResources": [
-      {
-        "from": "misc/",
-        "to": "misc/",
-        "filter": [
-          "**/*"
-        ]
-      }
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}",
+      "!test",
+      "!**/*.psd",
+      "!biome.json",
+      "!.prettierrc",
+      "!.nvmrc",
+      "!.npmrc",
+      "!misc/WatchMe-demo.gif",
+      "!misc/WatchMe-logo.png"
     ],
     "mac": {
       "target": [
