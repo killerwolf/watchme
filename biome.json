@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.8.4/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.9/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "ignore": ["node_modules/**", "dist/**", "build/**", "*.log"]
+    "includes": ["**", "!**/node_modules", "!**/dist", "!**/build", "!**/*.log"]
   },
   "formatter": {
     "enabled": true,
@@ -17,25 +17,32 @@
     "lineWidth": 80,
     "lineEnding": "lf"
   },
-  "organizeImports": {
-    "enabled": true
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
   },
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "correctness": {
         "noUnusedVariables": "error"
       },
       "style": {
-        "useConst": "error",
-        "noVar": "error"
+        "useConst": "error"
       },
       "suspicious": {
-        "noExplicitAny": "warn"
+        "noExplicitAny": "warn",
+        "noVar": "error"
       },
       "complexity": {
         "noForEach": "warn"
+      },
+      "a11y": {
+        "useSemanticElements": "off"
       }
     }
   },

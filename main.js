@@ -1,19 +1,18 @@
 import path from 'node:path';
+// Define __dirname in ES modules
+import { fileURLToPath } from 'node:url'; // Adjusted import
 import { enable, initialize } from '@electron/remote/main/index.js';
 // main.js
 import {
-  BrowserWindow,
-  Tray,
   app,
+  BrowserWindow,
   ipcMain,
   nativeImage,
   screen,
+  Tray,
 } from 'electron';
 import Store from 'electron-store';
 import psList from 'ps-list';
-
-// Define __dirname in ES modules
-import { fileURLToPath } from 'node:url'; // Adjusted import
 
 // Initialize @electron/remote
 initialize();
@@ -163,7 +162,6 @@ ipcMain.on('save-preferences', (event, newPreferences) => {
       openAtLogin: preferences.autoLaunch,
     });
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error('Failed to set login item settings:', error);
     loginItemSuccess = false;
     // Continue execution - this is not critical for app functionality

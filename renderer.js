@@ -9,7 +9,6 @@ const logger = {
     // Disabled to avoid console warnings
   },
   error: (...args) => {
-    // eslint-disable-next-line no-console
     console.error('[WatchMe Error]', ...args);
   },
 };
@@ -277,7 +276,7 @@ async function listProcesses() {
       checkbox.checked = monitoredProcesses.has(proc.pid);
 
       checkbox.addEventListener('change', (e) => {
-        const pid = Number.parseInt(e.target.value);
+        const pid = Number.parseInt(e.target.value, 10);
         const processName = proc.name;
         if (e.target.checked) {
           if (!monitoredProcesses.has(pid)) {
