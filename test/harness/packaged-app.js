@@ -60,6 +60,20 @@ app.whenReady().then(() => {
     failures.push("index.html absent de l'asar");
   }
 
+  // Icone de l'application (cf. issue #31). Sans `mac.icon`, electron-builder
+  // ne previent que par un avertissement facile a manquer dans les logs de
+  // build, et livre electron.icns : l'app porte alors l'icone generique
+  // d'Electron dans le Finder et le Dock.
+  const resources = path.join(appPath, 'Contents', 'Resources');
+  if (existsSync(path.join(resources, 'electron.icns'))) {
+    failures.push(
+      "l'app porte electron.icns : icone generique d'Electron, `mac.icon` est absent"
+    );
+  }
+  if (!existsSync(path.join(resources, 'icon.icns'))) {
+    failures.push('icon.icns absent des ressources de l app');
+  }
+
   for (const failure of failures) console.error(`FAIL ${failure}`);
   if (failures.length === 0) {
     console.log(`ok   app packagee verifiee (${path.basename(appPath)})`);
