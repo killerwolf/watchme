@@ -126,6 +126,27 @@ check(
       'le renderer na recu aucun processus a travers le pont IPC'
     );
 
+    // Non-regression XSS (cf. issue #6) : le nom d'un processus arrive
+    // jusqu'a la notification de repli. Il doit rester du texte.
+    const payload = '<img src=x onerror="window.__pwned = true">';
+    const xss = await win.webContents.executeJavaScript(`
+      (() => {
+        showFallbackNotification(${JSON.stringify(payload)}, 'info');
+        const node = document.querySelector('.notification.info');
+        return {
+          injectedImages: node.querySelectorAll('img').length,
+          renderedText: node.textContent,
+          pwned: window.__pwned === true,
+        };
+      })()
+    `);
+    assert.equal(xss.injectedImages, 0, 'le markup injecte a ete interprete');
+    assert.equal(xss.pwned, false, 'le handler onerror a ete execute');
+    assert.ok(
+      xss.renderedText.includes(payload),
+      'le message doit safficher comme texte litteral'
+    );
+
     win.destroy();
     ipcMain.removeHandler('get-processes');
     ipcMain.removeHandler('get-preferences');

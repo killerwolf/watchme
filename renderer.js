@@ -45,12 +45,21 @@ function showFallbackNotification(message, type) {
   // Create a custom notification element
   const notification = document.createElement('div');
   notification.className = `notification ${type}`;
-  notification.innerHTML = `
-    <div style="display: flex; align-items: center; gap: 10px;">
-      <span style="font-size: 18px;">${type === 'error' ? '⚠️' : 'ℹ️'}</span>
-      <span>${message}</span>
-    </div>
-  `;
+
+  // Construction DOM plutot qu'innerHTML : `message` peut contenir un nom
+  // de processus, donc du texte controle par n'importe quel processus local.
+  const row = document.createElement('div');
+  row.style.cssText = 'display: flex; align-items: center; gap: 10px;';
+
+  const icon = document.createElement('span');
+  icon.style.cssText = 'font-size: 18px;';
+  icon.textContent = type === 'error' ? '⚠️' : 'ℹ️';
+
+  const label = document.createElement('span');
+  label.textContent = message;
+
+  row.append(icon, label);
+  notification.appendChild(row);
 
   // Style the notification
   notification.style.cssText = `
