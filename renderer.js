@@ -9,7 +9,6 @@ const logger = {
     // Disabled to avoid console warnings
   },
   error: (...args) => {
-    // eslint-disable-next-line no-console
     console.error('[WatchMe Error]', ...args);
   },
 };
@@ -90,7 +89,7 @@ function initialize() {
   }
 
   // Sidebar Navigation Event Listeners
-  document.querySelectorAll('.sidebar-item').forEach((item) => {
+  for (const item of document.querySelectorAll('.sidebar-item')) {
     item.addEventListener('click', () => {
       const tabName = item.getAttribute('data-tab');
       activateTab(tabName);
@@ -103,7 +102,7 @@ function initialize() {
         activateTab(tabName);
       }
     });
-  });
+  }
 
   // Save preferences when the user clicks "Save"
   document.getElementById('savePreferences').addEventListener('click', () => {
@@ -149,10 +148,10 @@ function initialize() {
 
 function activateTab(tabName) {
   // Hide all tab contents
-  document.querySelectorAll('.tab-content').forEach((tab) => {
+  for (const tab of document.querySelectorAll('.tab-content')) {
     tab.classList.remove('active');
     tab.style.display = 'none';
-  });
+  }
 
   // Show the selected tab content
   const activeTab = document.getElementById(`${tabName}-tab`);
@@ -162,9 +161,9 @@ function activateTab(tabName) {
   }, 0);
 
   // Update active sidebar item
-  document.querySelectorAll('.sidebar-item').forEach((item) => {
+  for (const item of document.querySelectorAll('.sidebar-item')) {
     item.classList.remove('active');
-  });
+  }
   document
     .querySelector(`.sidebar-item[data-tab="${tabName}"]`)
     .classList.add('active');
@@ -196,7 +195,7 @@ function savePreferences() {
 }
 
 // Listen for preferences saved response
-window.electronAPI.onPreferencesSaved((event, response) => {
+window.electronAPI.onPreferencesSaved((_event, response) => {
   if (response.success) {
     showNotification(
       response.message,
@@ -262,7 +261,7 @@ async function listProcesses() {
     noDataRow.appendChild(noDataCell);
     processTableBody.appendChild(noDataRow);
   } else {
-    scriptProcesses.forEach((proc) => {
+    for (const proc of scriptProcesses) {
       const row = document.createElement('tr');
 
       if (monitoredProcesses.has(proc.pid)) {
@@ -277,7 +276,7 @@ async function listProcesses() {
       checkbox.checked = monitoredProcesses.has(proc.pid);
 
       checkbox.addEventListener('change', (e) => {
-        const pid = parseInt(e.target.value);
+        const pid = Number.parseInt(e.target.value, 10);
         const processName = proc.name;
         if (e.target.checked) {
           if (!monitoredProcesses.has(pid)) {
@@ -321,7 +320,7 @@ async function listProcesses() {
       row.appendChild(cmdCell);
 
       processTableBody.appendChild(row);
-    });
+    }
   }
 }
 

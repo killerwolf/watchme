@@ -1,19 +1,18 @@
+import path from 'node:path';
+// Define __dirname in ES modules
+import { fileURLToPath } from 'node:url'; // Adjusted import
+import { enable, initialize } from '@electron/remote/main/index.js';
 // main.js
 import {
   app,
   BrowserWindow,
   ipcMain,
-  Tray,
   nativeImage,
   screen,
+  Tray,
 } from 'electron';
-import path from 'path';
-import psList from 'ps-list';
 import Store from 'electron-store';
-import { initialize, enable } from '@electron/remote/main/index.js';
-
-// Define __dirname in ES modules
-import { fileURLToPath } from 'url'; // Adjusted import
+import psList from 'ps-list';
 
 // Initialize @electron/remote
 initialize();
@@ -163,7 +162,6 @@ ipcMain.on('save-preferences', (event, newPreferences) => {
       openAtLogin: preferences.autoLaunch,
     });
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error('Failed to set login item settings:', error);
     loginItemSuccess = false;
     // Continue execution - this is not critical for app functionality
@@ -179,7 +177,7 @@ ipcMain.on('save-preferences', (event, newPreferences) => {
   });
 });
 
-ipcMain.on('update-tray-tooltip', (event, numProcesses) => {
+ipcMain.on('update-tray-tooltip', (_event, numProcesses) => {
   const tooltip = `Script Watcher - Monitoring ${numProcesses} process${
     numProcesses === 1 ? '' : 'es'
   }`;
@@ -191,7 +189,7 @@ ipcMain.on('update-tray-tooltip', (event, numProcesses) => {
 //});
 
 // Handle window control actions
-ipcMain.on('window-control', (event, action) => {
+ipcMain.on('window-control', (_event, action) => {
   switch (action) {
     case 'minimize':
       mainWindow.minimize();
