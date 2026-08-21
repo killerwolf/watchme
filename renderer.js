@@ -118,26 +118,6 @@ function initialize() {
     savePreferences();
   });
 
-  // Initialize notifications
-  if (Notification.permission !== 'granted') {
-    Notification.requestPermission();
-  }
-
-  // Window Control Buttons
-  /*
-  document.getElementById('minimize-button').addEventListener('click', () => {
-    window.electronAPI.windowControl('minimize');
-  });
-
-  document.getElementById('maximize-button').addEventListener('click', () => {
-    window.electronAPI.windowControl('maximize');
-  });
-
-  document.getElementById('close-button').addEventListener('click', () => {
-    window.electronAPI.windowControl('close');
-  });
-  */
-
   document.getElementById('quit-app-button').addEventListener('click', () => {
     window.electronAPI.quitApp();
   });
@@ -442,10 +422,6 @@ function playNotificationSound() {
 function updateMonitoringStatus() {
   // Send the number of monitored processes to main process
   window.electronAPI.updateTrayTooltip(monitoredProcesses.size);
-  // Also send the monitoredProcesses map
-  window.electronAPI.updateMonitoredProcesses(
-    Array.from(monitoredProcesses.entries())
-  );
 }
 
 // Initialize the app when the content is loaded

@@ -178,34 +178,6 @@ ipcMain.on('update-tray-tooltip', (_event, numProcesses) => {
   tray.setToolTip(tooltip);
 });
 
-//ipcMain.on('update-monitored-processes', (event, monitoredPIDs) => {
-// You can handle monitored processes here if needed
-//});
-
-// Handle window control actions
-ipcMain.on('window-control', (_event, action) => {
-  switch (action) {
-    case 'minimize':
-      mainWindow.minimize();
-      break;
-    case 'maximize':
-      if (mainWindow.isMaximized()) {
-        mainWindow.unmaximize();
-      } else {
-        mainWindow.maximize();
-      }
-      break;
-    case 'close':
-      if (process.platform !== 'darwin') {
-        app.isQuitting = true;
-        app.quit();
-      } else {
-        mainWindow.hide();
-      }
-      break;
-  }
-});
-
 ipcMain.on('quit-app', () => {
   app.isQuitting = true;
   app.quit();
@@ -225,9 +197,15 @@ app.on('before-quit', () => {
   app.isQuitting = true;
 });
 
-app.on('window-all-closed', (event) => {
-  event.preventDefault(); // Prevent default behavior of quitting
-});
+// Listener volontairement vide : sa seule presence neutralise le
+// comportement par defaut d'Electron, qui est de quitter l'app quand
+// toutes les fenetres sont fermees.
+//
+// En pratique il est peu sollicite : le handler `close` ci-dessus masque
+// la fenetre au lieu de la fermer tant que app.isQuitting est faux. Il est
+// conserve faute de pouvoir prouver qu'aucun chemin ne ferme la fenetre
+// sans vouloir quitter. Ne pas le supprimer sans avoir verifie ce point.
+app.on('window-all-closed', () => {});
 
 app.on('activate', () => {
   if (mainWindow) {
