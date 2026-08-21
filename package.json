@@ -1,6 +1,6 @@
 {
   "name": "watchme",
-  "version": "0.0.0",
+  "version": "0.9.17",
   "description": "A powerful and user-friendly process monitoring tool for macOS, Windows, and Linux",
   "main": "main.js",
   "type": "module",
@@ -39,9 +39,18 @@
     "clean": "rimraf dist",
     "postinstall": "electron-builder install-app-deps"
   },
-  "keywords": [],
-  "author": "",
-  "license": "MIT License with Attribution Requirement",
+  "keywords": [
+    "electron",
+    "process-monitor",
+    "process-watcher",
+    "system-monitor",
+    "macos",
+    "tray",
+    "notifications",
+    "desktop-app"
+  ],
+  "author": "@killerwolf (https://github.com/killerwolf)",
+  "license": "SEE LICENSE IN LICENSE",
   "build": {
     "appId": "com.mindmystory.watchme",
     "productName": "WatchMe",
