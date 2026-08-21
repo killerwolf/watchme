@@ -5,7 +5,7 @@ Toutes les évolutions notables de WatchMe sont consignées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/),
 et le projet respecte le [versionnage sémantique](https://semver.org/lang/fr/).
 
-## [Non publié]
+## [0.10.0] - 2026-08-21
 
 Ce lot est une reprise de maintenance après onze mois sans commit. Il a été
 mené sous une contrainte explicite : **ne modifier aucune fonctionnalité
