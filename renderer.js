@@ -415,8 +415,16 @@ function notifyProcessEnded(pid, processName) {
 }
 
 function playNotificationSound() {
-  const audio = new Audio('notification-sound.mp3'); // Ensure you have this file in your project's directory
-  audio.play();
+  // ATTENTION : notification-sound.mp3 n'existe pas dans le depot. Cette
+  // fonction est donc muette, alors que le README annonce des "Sound alerts".
+  // Le .catch() ne fait que supprimer la promesse rejetee a chaque fin de
+  // processus surveille ; il ne repare pas la fonctionnalite.
+  // L'arbitrage (fournir le fichier ou retirer la fonctionnalite) est
+  // suivi dans l'issue #17.
+  const audio = new Audio('notification-sound.mp3');
+  audio.play().catch((error) => {
+    logger.error('Notification sound unavailable:', error);
+  });
 }
 
 function updateMonitoringStatus() {
