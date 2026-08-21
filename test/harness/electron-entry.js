@@ -147,6 +147,31 @@ check(
       'le message doit safficher comme texte litteral'
     );
 
+    // Hors-ligne et CSP (cf. issue #7) : aucune ressource distante, et les
+    // icones doivent avoir des dimensions reelles une fois rendues.
+    const offline = await win.webContents.executeJavaScript(`
+      (() => {
+        const remote = [...document.querySelectorAll('link[href], script[src], img[src]')]
+          .map((el) => el.getAttribute('href') || el.getAttribute('src'))
+          .filter((url) => /^https?:/.test(url));
+        const icons = [...document.querySelectorAll('svg.icon, svg.search-icon')];
+        return {
+          remote,
+          iconCount: icons.length,
+          unsized: icons.filter((el) => el.getBoundingClientRect().width === 0).length,
+          csp: !!document.querySelector('meta[http-equiv="Content-Security-Policy"]'),
+        };
+      })()
+    `);
+    assert.deepEqual(offline.remote, [], 'ressources distantes referencees');
+    assert.equal(offline.csp, true, 'aucune balise CSP');
+    assert.equal(
+      offline.iconCount,
+      4,
+      'les 4 icones inline doivent etre presentes'
+    );
+    assert.equal(offline.unsized, 0, 'une icone a une largeur nulle');
+
     win.destroy();
     ipcMain.removeHandler('get-processes');
     ipcMain.removeHandler('get-preferences');
