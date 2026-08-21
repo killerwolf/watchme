@@ -19,6 +19,9 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
+    "test": "npm run test:unit && npm run test:electron",
+    "test:unit": "node --test test/*.test.js",
+    "test:electron": "electron test/harness/electron-entry.js",
     "build": "electron-builder",
     "build:mac": "electron-builder --mac",
     "build:win": "electron-builder --win",
