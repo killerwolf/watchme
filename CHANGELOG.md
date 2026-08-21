@@ -5,6 +5,34 @@ Toutes les évolutions notables de WatchMe sont consignées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/),
 et le projet respecte le [versionnage sémantique](https://semver.org/lang/fr/).
 
+## [0.11.1] - 2026-08-21
+
+Version de tuyauterie : **le binaire est fonctionnellement identique à la
+v0.11.0**. Elle acte la refonte de la publication et sert de première release
+du nouveau chemin.
+
+### Modifié
+
+- La release est désormais publiée par **electron-builder** lui-même, et non
+  plus par un job séparé qui retéléchargeait les artefacts pour les reposter.
+  Un job de moins, et surtout la génération des `latest-mac.yml` et `.blockmap`
+  dont `electron-updater` aura besoin le jour où l'on voudra la mise à jour
+  automatique. Aligne WatchMe sur le workflow de QuickToss. (#49)
+- Le corps de la release est alimenté depuis ce fichier, avec repli sur les
+  notes générées par GitHub à défaut de section correspondante.
+- Un tag de préversion (`v0.11.1-rc.1`) publie désormais en *pre-release*, que
+  `electron-updater` ignore par défaut.
+- `rimraf` monte en 6.x, les actions GitHub en v7.
+
+### Corrigé
+
+- **Course à la création de la release.** electron-builder lance un publieur
+  par architecture, en parallèle : les deux tentaient de créer la release en
+  même temps et le perdant recevait un `422 already_exists` qui faisait échouer
+  toutes ses mises en ligne. Constaté sur `v0.11.1-rc.1` — 1 fichier publié sur
+  8. La release est maintenant créée avant le build, il n'y a plus rien à
+  courir.
+
 ## [0.11.0] - 2026-08-21
 
 ### Ajouté
