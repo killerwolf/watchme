@@ -10,8 +10,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('preferences-saved', callback),
   updateTrayTooltip: (numProcesses) =>
     ipcRenderer.send('update-tray-tooltip', numProcesses),
-  updateMonitoredProcesses: (monitoredProcesses) =>
-    ipcRenderer.send('update-monitored-processes', monitoredProcesses),
-  windowControl: (action) => ipcRenderer.send('window-control', action),
   quitApp: () => ipcRenderer.send('quit-app'),
 });
