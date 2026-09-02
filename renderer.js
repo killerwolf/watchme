@@ -1,7 +1,27 @@
 // renderer.js
 
-const monitoredProcesses = new Map();
-let monitoringInterval = null;
+import { createProcessMonitor } from './monitoring.js';
+
+const processMonitor = createProcessMonitor({
+  getProcesses: () => window.electronAPI.getProcesses(),
+});
+
+processMonitor.onEnded((pid, processName) => {
+  notifyProcessEnded(pid, processName);
+
+  const checkbox = document.querySelector(
+    `input[type="checkbox"][value="${pid}"]`
+  );
+  if (checkbox) {
+    checkbox.checked = false;
+    const row = checkbox.closest('tr');
+    if (row) {
+      row.classList.remove('highlighted-row');
+    }
+  }
+});
+
+processMonitor.onChange(() => updateMonitoringStatus());
 
 // Simple logging utility - disabled in production
 const logger = {
@@ -87,6 +107,13 @@ function showFallbackNotification(message, type) {
     }
   }, 5000);
 }
+
+// renderer.js is now loaded as an ES module, so top-level declarations no
+// longer land on `window` automatically. The Electron test harness
+// (test/harness/electron-entry.js) drives this function directly via
+// executeJavaScript for the XSS regression test (issue #6) — keep it
+// reachable there.
+window.showFallbackNotification = showFallbackNotification;
 
 function initialize() {
   // Initialize notifications
@@ -253,7 +280,7 @@ async function listProcesses() {
     for (const proc of scriptProcesses) {
       const row = document.createElement('tr');
 
-      if (monitoredProcesses.has(proc.pid)) {
+      if (processMonitor.has(proc.pid)) {
         row.classList.add('highlighted-row');
       }
 
@@ -262,32 +289,20 @@ async function listProcesses() {
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.value = proc.pid;
-      checkbox.checked = monitoredProcesses.has(proc.pid);
+      checkbox.checked = processMonitor.has(proc.pid);
 
       checkbox.addEventListener('change', (e) => {
         const pid = Number.parseInt(e.target.value, 10);
         const processName = proc.name;
         if (e.target.checked) {
-          if (!monitoredProcesses.has(pid)) {
-            monitoredProcesses.set(pid, processName);
-            logger.debug(
-              `Added process ${processName} (PID ${pid}) to monitoring.`
-            );
-            if (monitoringInterval === null) {
-              startMonitoring();
-            }
-          }
+          processMonitor.add(pid, processName);
+          logger.debug(
+            `Added process ${processName} (PID ${pid}) to monitoring.`
+          );
         } else {
-          monitoredProcesses.delete(pid);
+          processMonitor.remove(pid);
           logger.debug(`Removed process (PID ${pid}) from monitoring.`);
-          if (monitoredProcesses.size === 0 && monitoringInterval !== null) {
-            clearInterval(monitoringInterval);
-            monitoringInterval = null;
-          }
         }
-
-        // Update monitoring status
-        updateMonitoringStatus();
       });
 
       checkboxCell.appendChild(checkbox);
@@ -340,47 +355,6 @@ filterInput.addEventListener(
   }, 300)
 );
 
-function startMonitoring() {
-  if (monitoringInterval !== null) {
-    return;
-  }
-
-  monitoringInterval = setInterval(async () => {
-    const processes = await window.electronAPI.getProcesses();
-    const runningPIDs = processes.map((proc) => proc.pid);
-
-    monitoredProcesses.forEach((processName, pid) => {
-      if (!runningPIDs.includes(pid)) {
-        // Process has ended
-        notifyProcessEnded(pid, processName);
-        // Remove from monitoredProcesses
-        monitoredProcesses.delete(pid);
-
-        // Update the UI
-        const checkbox = document.querySelector(
-          `input[type="checkbox"][value="${pid}"]`
-        );
-        if (checkbox) {
-          checkbox.checked = false;
-          // Remove highlight
-          const row = checkbox.closest('tr');
-          if (row) {
-            row.classList.remove('highlighted-row');
-          }
-        }
-
-        // Update monitoring status
-        updateMonitoringStatus();
-      }
-    });
-
-    if (monitoredProcesses.size === 0) {
-      clearInterval(monitoringInterval);
-      monitoringInterval = null;
-    }
-  }, 5000); // Check every 5 seconds
-}
-
 function notifyProcessEnded(pid, processName) {
   logger.debug(`Process "${processName}" (PID ${pid}) has ended.`);
 
@@ -428,7 +402,7 @@ function playNotificationSound() {
 
 function updateMonitoringStatus() {
   // Send the number of monitored processes to main process
-  window.electronAPI.updateTrayTooltip(monitoredProcesses.size);
+  window.electronAPI.updateTrayTooltip(processMonitor.size);
 }
 
 // Initialize the app when the content is loaded
