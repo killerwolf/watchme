@@ -84,6 +84,7 @@ check(
       autoLaunch: false,
       prefilterRegex: '',
     }));
+    ipcMain.handle('save-preferences', () => ({ loginItemSuccess: true }));
 
     const win = new BrowserWindow({
       width: 800,
@@ -124,6 +125,18 @@ check(
     assert.ok(
       processCount > 0,
       'le renderer na recu aucun processus a travers le pont IPC'
+    );
+
+    // save-preferences est un aller-retour invoke/handle (comme
+    // get-processes), pas un send/on fire-and-forget : le renderer doit
+    // recevoir le resultat retourne par le handler.
+    const saveResult = await win.webContents.executeJavaScript(
+      "window.electronAPI.savePreferences({ autoLaunch: true, prefilterRegex: '' })"
+    );
+    assert.deepEqual(
+      saveResult,
+      { loginItemSuccess: true },
+      'save-preferences doit renvoyer le resultat du handler via invoke'
     );
 
     // Non-regression XSS (cf. issue #6) : le nom d'un processus arrive
@@ -196,6 +209,7 @@ check(
     win.destroy();
     ipcMain.removeHandler('get-processes');
     ipcMain.removeHandler('get-preferences');
+    ipcMain.removeHandler('save-preferences');
   }
 );
 

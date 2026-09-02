@@ -145,7 +145,7 @@ ipcMain.handle('get-processes', async () => {
 
 ipcMain.handle('get-preferences', () => preferences);
 
-ipcMain.on('save-preferences', (event, newPreferences) => {
+ipcMain.handle('save-preferences', (_event, newPreferences) => {
   preferences = { ...preferences, ...newPreferences };
   store.set('preferences', preferences); // Save to store
 
@@ -161,14 +161,7 @@ ipcMain.on('save-preferences', (event, newPreferences) => {
     // Continue execution - this is not critical for app functionality
   }
 
-  // Send response back to renderer
-  event.reply('preferences-saved', {
-    success: true,
-    loginItemSuccess,
-    message: loginItemSuccess
-      ? 'Preferences saved successfully!'
-      : 'Preferences saved, but login item setting failed. You may need to grant permission in System Preferences.',
-  });
+  return { loginItemSuccess };
 });
 
 ipcMain.on('update-tray-tooltip', (_event, numProcesses) => {

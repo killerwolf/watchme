@@ -201,26 +201,33 @@ function loadPreferences() {
   });
 }
 
-function savePreferences() {
+async function savePreferences() {
   const autoLaunch = document.getElementById('autoLaunch').checked;
-  const prefilterRegex = document.getElementById('prefilterRegex').value.trim();
-  window.electronAPI.savePreferences({ autoLaunch, prefilterRegex });
+  const prefilterRegex = document
+    .getElementById('prefilterRegex')
+    .value.trim();
+
+  try {
+    const { loginItemSuccess } = await window.electronAPI.savePreferences({
+      autoLaunch,
+      prefilterRegex,
+    });
+    showNotification(
+      loginItemSuccess
+        ? 'Preferences saved successfully!'
+        : 'Preferences saved, but login item setting failed. You may need to grant permission in System Preferences.',
+      loginItemSuccess ? 'info' : 'warning'
+    );
+  } catch (error) {
+    logger.error('Failed to save preferences:', error);
+    showNotification('Failed to save preferences.', 'error');
+  }
 
   // Reload processes after saving preferences
   if (document.getElementById('processes-tab').style.display === 'block') {
     listProcesses();
   }
 }
-
-// Listen for preferences saved response
-window.electronAPI.onPreferencesSaved((_event, response) => {
-  if (response.success) {
-    showNotification(
-      response.message,
-      response.loginItemSuccess ? 'info' : 'warning'
-    );
-  }
-});
 
 async function listProcesses() {
   const processes = await window.electronAPI.getProcesses();
