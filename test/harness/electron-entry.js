@@ -22,6 +22,7 @@ import {
 } from 'electron';
 import Store from 'electron-store';
 import psList from 'ps-list';
+import IPC_CHANNELS from '../../ipc-channels.json' with { type: 'json' };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..', '..');
@@ -79,12 +80,14 @@ check(
   'une BrowserWindow avec les webPreferences de main.js charge index.html',
   async () => {
     // Les memes handlers que main.js, pour exercer le pont IPC de bout en bout.
-    ipcMain.handle('get-processes', () => psList());
-    ipcMain.handle('get-preferences', () => ({
+    ipcMain.handle(IPC_CHANNELS.GET_PROCESSES, () => psList());
+    ipcMain.handle(IPC_CHANNELS.GET_PREFERENCES, () => ({
       autoLaunch: false,
       prefilterRegex: '',
     }));
-    ipcMain.handle('save-preferences', () => ({ loginItemSuccess: true }));
+    ipcMain.handle(IPC_CHANNELS.SAVE_PREFERENCES, () => ({
+      loginItemSuccess: true,
+    }));
 
     const win = new BrowserWindow({
       width: 800,
@@ -94,6 +97,7 @@ check(
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
+        sandbox: false, // voir main.js pour la justification
         preload: path.join(ROOT, 'preload.js'),
       },
     });
@@ -207,9 +211,9 @@ check(
     assert.ok(sound.duration > 0.5, 'duree du son inattendue');
 
     win.destroy();
-    ipcMain.removeHandler('get-processes');
-    ipcMain.removeHandler('get-preferences');
-    ipcMain.removeHandler('save-preferences');
+    ipcMain.removeHandler(IPC_CHANNELS.GET_PROCESSES);
+    ipcMain.removeHandler(IPC_CHANNELS.GET_PREFERENCES);
+    ipcMain.removeHandler(IPC_CHANNELS.SAVE_PREFERENCES);
   }
 );
 
