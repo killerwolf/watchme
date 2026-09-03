@@ -1,14 +1,13 @@
 // preload.js
-const { contextBridge, ipcRenderer } = require('electron');
+import { contextBridge, ipcRenderer } from 'electron';
+import IPC_CHANNELS from './ipc-channels.json' with { type: 'json' };
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  getProcesses: () => ipcRenderer.invoke('get-processes'),
-  getPreferences: () => ipcRenderer.invoke('get-preferences'),
+  getProcesses: () => ipcRenderer.invoke(IPC_CHANNELS.GET_PROCESSES),
+  getPreferences: () => ipcRenderer.invoke(IPC_CHANNELS.GET_PREFERENCES),
   savePreferences: (preferences) =>
-    ipcRenderer.send('save-preferences', preferences),
-  onPreferencesSaved: (callback) =>
-    ipcRenderer.on('preferences-saved', callback),
+    ipcRenderer.invoke(IPC_CHANNELS.SAVE_PREFERENCES, preferences),
   updateTrayTooltip: (numProcesses) =>
-    ipcRenderer.send('update-tray-tooltip', numProcesses),
-  quitApp: () => ipcRenderer.send('quit-app'),
+    ipcRenderer.send(IPC_CHANNELS.UPDATE_TRAY_TOOLTIP, numProcesses),
+  quitApp: () => ipcRenderer.send(IPC_CHANNELS.QUIT_APP),
 });

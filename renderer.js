@@ -33,31 +33,33 @@ const logger = {
   },
 };
 
-// Enhanced notification system to replace alerts
-function showNotification(message, type = 'info') {
-  // Try to use desktop notifications first
+// Single owner of the "granted / ask / denied" branch. Desktop notifications
+// vary by title and icon (WatchMe vs. Process Ended); when they can't be
+// shown, every caller falls back to the same in-app banner.
+function showDesktopNotification({ title, message, type = 'info', icon }) {
   if (Notification.permission === 'granted') {
-    new Notification('WatchMe', {
-      body: message,
-      icon: 'misc/tray-icon.png',
-    });
+    new Notification(title, { body: message, icon });
   } else if (Notification.permission !== 'denied') {
-    // Request permission and show notification
     Notification.requestPermission().then((permission) => {
       if (permission === 'granted') {
-        new Notification('WatchMe', {
-          body: message,
-          icon: 'misc/tray-icon.png',
-        });
+        new Notification(title, { body: message, icon });
       } else {
-        // Fallback to a more user-friendly alert alternative
         showFallbackNotification(message, type);
       }
     });
   } else {
-    // Fallback when notifications are denied
     showFallbackNotification(message, type);
   }
+}
+
+// Enhanced notification system to replace alerts
+function showNotification(message, type = 'info') {
+  showDesktopNotification({
+    title: 'WatchMe',
+    message,
+    type,
+    icon: 'misc/tray-icon.png',
+  });
 }
 
 // Fallback notification when desktop notifications are not available
@@ -199,26 +201,31 @@ function loadPreferences() {
   });
 }
 
-function savePreferences() {
+async function savePreferences() {
   const autoLaunch = document.getElementById('autoLaunch').checked;
   const prefilterRegex = document.getElementById('prefilterRegex').value.trim();
-  window.electronAPI.savePreferences({ autoLaunch, prefilterRegex });
+
+  try {
+    const { loginItemSuccess } = await window.electronAPI.savePreferences({
+      autoLaunch,
+      prefilterRegex,
+    });
+    showNotification(
+      loginItemSuccess
+        ? 'Preferences saved successfully!'
+        : 'Preferences saved, but login item setting failed. You may need to grant permission in System Preferences.',
+      loginItemSuccess ? 'info' : 'warning'
+    );
+  } catch (error) {
+    logger.error('Failed to save preferences:', error);
+    showNotification('Failed to save preferences.', 'error');
+  }
 
   // Reload processes after saving preferences
   if (document.getElementById('processes-tab').style.display === 'block') {
     listProcesses();
   }
 }
-
-// Listen for preferences saved response
-window.electronAPI.onPreferencesSaved((_event, response) => {
-  if (response.success) {
-    showNotification(
-      response.message,
-      response.loginItemSuccess ? 'info' : 'warning'
-    );
-  }
-});
 
 async function listProcesses() {
   const processes = await window.electronAPI.getProcesses();
@@ -358,31 +365,10 @@ filterInput.addEventListener(
 function notifyProcessEnded(pid, processName) {
   logger.debug(`Process "${processName}" (PID ${pid}) has ended.`);
 
-  // Display a desktop notification
-  if (Notification.permission === 'granted') {
-    new Notification('Process Ended', {
-      body: `Process "${processName}" (PID ${pid}) has ended.`,
-    });
-  } else if (Notification.permission !== 'denied') {
-    Notification.requestPermission().then((permission) => {
-      if (permission === 'granted') {
-        new Notification('Process Ended', {
-          body: `Process "${processName}" (PID ${pid}) has ended.`,
-        });
-      } else {
-        showNotification(
-          `Process "${processName}" (PID ${pid}) has ended.`,
-          'info'
-        );
-      }
-    });
-  } else {
-    // If permission was denied
-    showNotification(
-      `Process "${processName}" (PID ${pid}) has ended.`,
-      'info'
-    );
-  }
+  showDesktopNotification({
+    title: 'Process Ended',
+    message: `Process "${processName}" (PID ${pid}) has ended.`,
+  });
 
   // Play a sound notification
   playNotificationSound();

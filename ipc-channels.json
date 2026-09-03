@@ -1,0 +1,7 @@
+{
+  "GET_PROCESSES": "get-processes",
+  "GET_PREFERENCES": "get-preferences",
+  "SAVE_PREFERENCES": "save-preferences",
+  "UPDATE_TRAY_TOOLTIP": "update-tray-tooltip",
+  "QUIT_APP": "quit-app"
+}

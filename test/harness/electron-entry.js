@@ -22,6 +22,7 @@ import {
 } from 'electron';
 import Store from 'electron-store';
 import psList from 'ps-list';
+import IPC_CHANNELS from '../../ipc-channels.json' with { type: 'json' };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..', '..');
@@ -79,10 +80,13 @@ check(
   'une BrowserWindow avec les webPreferences de main.js charge index.html',
   async () => {
     // Les memes handlers que main.js, pour exercer le pont IPC de bout en bout.
-    ipcMain.handle('get-processes', () => psList());
-    ipcMain.handle('get-preferences', () => ({
+    ipcMain.handle(IPC_CHANNELS.GET_PROCESSES, () => psList());
+    ipcMain.handle(IPC_CHANNELS.GET_PREFERENCES, () => ({
       autoLaunch: false,
       prefilterRegex: '',
+    }));
+    ipcMain.handle(IPC_CHANNELS.SAVE_PREFERENCES, () => ({
+      loginItemSuccess: true,
     }));
 
     const win = new BrowserWindow({
@@ -93,6 +97,7 @@ check(
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
+        sandbox: false, // voir main.js pour la justification
         preload: path.join(ROOT, 'preload.js'),
       },
     });
@@ -124,6 +129,18 @@ check(
     assert.ok(
       processCount > 0,
       'le renderer na recu aucun processus a travers le pont IPC'
+    );
+
+    // save-preferences est un aller-retour invoke/handle (comme
+    // get-processes), pas un send/on fire-and-forget : le renderer doit
+    // recevoir le resultat retourne par le handler.
+    const saveResult = await win.webContents.executeJavaScript(
+      "window.electronAPI.savePreferences({ autoLaunch: true, prefilterRegex: '' })"
+    );
+    assert.deepEqual(
+      saveResult,
+      { loginItemSuccess: true },
+      'save-preferences doit renvoyer le resultat du handler via invoke'
     );
 
     // Non-regression XSS (cf. issue #6) : le nom d'un processus arrive
@@ -194,8 +211,9 @@ check(
     assert.ok(sound.duration > 0.5, 'duree du son inattendue');
 
     win.destroy();
-    ipcMain.removeHandler('get-processes');
-    ipcMain.removeHandler('get-preferences');
+    ipcMain.removeHandler(IPC_CHANNELS.GET_PROCESSES);
+    ipcMain.removeHandler(IPC_CHANNELS.GET_PREFERENCES);
+    ipcMain.removeHandler(IPC_CHANNELS.SAVE_PREFERENCES);
   }
 );
 

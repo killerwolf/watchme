@@ -12,6 +12,7 @@ import {
 } from 'electron';
 import Store from 'electron-store';
 import psList from 'ps-list';
+import IPC_CHANNELS from './ipc-channels.json' with { type: 'json' };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,6 +45,12 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false, // Disable nodeIntegration for security
       contextIsolation: true, // Enable context isolation
+      // contextIsolation is what actually walls the loaded page off from
+      // Node/Electron; sandbox additionally restricts the preload script
+      // itself, which blocks its require() to a small allowlist (no local
+      // files, not even node:fs). Disabled so preload.js can require the
+      // shared ipc-channels.json instead of hardcoding channel strings.
+      sandbox: false,
       preload: path.join(__dirname, 'preload.js'), // Use a preload script
     },
   });
@@ -138,14 +145,14 @@ function createTray() {
 }
 
 // IPC handlers
-ipcMain.handle('get-processes', async () => {
+ipcMain.handle(IPC_CHANNELS.GET_PROCESSES, async () => {
   const processes = await psList();
   return processes;
 });
 
-ipcMain.handle('get-preferences', () => preferences);
+ipcMain.handle(IPC_CHANNELS.GET_PREFERENCES, () => preferences);
 
-ipcMain.on('save-preferences', (event, newPreferences) => {
+ipcMain.handle(IPC_CHANNELS.SAVE_PREFERENCES, (_event, newPreferences) => {
   preferences = { ...preferences, ...newPreferences };
   store.set('preferences', preferences); // Save to store
 
@@ -161,24 +168,17 @@ ipcMain.on('save-preferences', (event, newPreferences) => {
     // Continue execution - this is not critical for app functionality
   }
 
-  // Send response back to renderer
-  event.reply('preferences-saved', {
-    success: true,
-    loginItemSuccess,
-    message: loginItemSuccess
-      ? 'Preferences saved successfully!'
-      : 'Preferences saved, but login item setting failed. You may need to grant permission in System Preferences.',
-  });
+  return { loginItemSuccess };
 });
 
-ipcMain.on('update-tray-tooltip', (_event, numProcesses) => {
+ipcMain.on(IPC_CHANNELS.UPDATE_TRAY_TOOLTIP, (_event, numProcesses) => {
   const tooltip = `Script Watcher - Monitoring ${numProcesses} process${
     numProcesses === 1 ? '' : 'es'
   }`;
   tray.setToolTip(tooltip);
 });
 
-ipcMain.on('quit-app', () => {
+ipcMain.on(IPC_CHANNELS.QUIT_APP, () => {
   app.isQuitting = true;
   app.quit();
 });
