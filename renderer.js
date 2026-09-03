@@ -203,9 +203,7 @@ function loadPreferences() {
 
 async function savePreferences() {
   const autoLaunch = document.getElementById('autoLaunch').checked;
-  const prefilterRegex = document
-    .getElementById('prefilterRegex')
-    .value.trim();
+  const prefilterRegex = document.getElementById('prefilterRegex').value.trim();
 
   try {
     const { loginItemSuccess } = await window.electronAPI.savePreferences({
