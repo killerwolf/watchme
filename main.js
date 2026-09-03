@@ -13,6 +13,7 @@ import {
 import Store from 'electron-store';
 import psList from 'ps-list';
 import IPC_CHANNELS from './ipc-channels.json' with { type: 'json' };
+import { trayBadge, trayTooltip } from './tray-status.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -172,10 +173,14 @@ ipcMain.handle(IPC_CHANNELS.SAVE_PREFERENCES, (_event, newPreferences) => {
 });
 
 ipcMain.on(IPC_CHANNELS.UPDATE_TRAY_TOOLTIP, (_event, numProcesses) => {
-  const tooltip = `Script Watcher - Monitoring ${numProcesses} process${
-    numProcesses === 1 ? '' : 'es'
-  }`;
-  tray.setToolTip(tooltip);
+  tray.setToolTip(trayTooltip(numProcesses));
+
+  // Le compteur a cote de l'icone : specifique a macOS, ou c'est la facon
+  // native d'afficher un compte dans la barre de menus. setTitle n'existe
+  // pas ailleurs, d'ou la garde.
+  if (process.platform === 'darwin') {
+    tray.setTitle(trayBadge(numProcesses));
+  }
 });
 
 ipcMain.on(IPC_CHANNELS.QUIT_APP, () => {

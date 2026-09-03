@@ -23,6 +23,7 @@ import {
 import Store from 'electron-store';
 import psList from 'ps-list';
 import IPC_CHANNELS from '../../ipc-channels.json' with { type: 'json' };
+import { trayBadge } from '../../tray-status.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..', '..');
@@ -65,6 +66,27 @@ check('un Tray peut etre construit et expose getBounds()', () => {
   for (const key of ['x', 'y', 'width', 'height']) {
     assert.equal(typeof bounds[key], 'number', `getBounds().${key}`);
   }
+  tray.destroy();
+});
+
+check('tray.setTitle() porte le compteur affiche a cote de l icone', () => {
+  // Le badge repose sur setTitle, qui n'existe que sur macOS.
+  if (process.platform !== 'darwin') return;
+
+  const trayIcon = nativeImage
+    .createFromPath(path.join(ROOT, 'misc/tray-icon.png'))
+    .resize({ width: 16, height: 12 });
+  const tray = new Tray(trayIcon);
+
+  assert.equal(typeof tray.setTitle, 'function', 'setTitle a disparu');
+
+  tray.setTitle(trayBadge(3));
+  assert.equal(tray.getTitle(), '3', 'le compteur ne sest pas applique');
+
+  // Zero processus surveille : le badge doit disparaitre, pas afficher 0.
+  tray.setTitle(trayBadge(0));
+  assert.equal(tray.getTitle(), '', 'le badge aurait du etre efface');
+
   tray.destroy();
 });
 
