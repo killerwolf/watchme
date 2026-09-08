@@ -1,7 +1,14 @@
 name: Build, Test, and Release
 
 on:
+  # Le job `test` doit tourner sur main, sinon le badge du workflow reste
+  # bloque sur « no status » : GitHub le calcule a partir des executions de
+  # la branche par defaut, et une execution `pull_request` est rattachee a
+  # la branche de la PR, pas a main. Le job `build` reste garde par sa
+  # condition sur refs/tags : un push sur main ne publie rien.
   push:
+    branches:
+      - main
     tags:
       - 'v*'
   pull_request:
