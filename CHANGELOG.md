@@ -7,6 +7,22 @@ et le projet respecte le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ## [Non publié]
 
+### Modifié
+
+- **Le README dit maintenant ce que l'application fait et pour qui.** Une
+  section « Is this the right tool? » nomme explicitement ce que WatchMe ne
+  fait pas — pas de métriques, pas de kill — et le tableau de bord d'activité
+  qui le fait. Le téléchargement et l'avertissement Gatekeeper du premier
+  lancement remontent en haut de page : une application non signée affiche
+  « damaged and can't be opened », ce que la plupart des gens lisent comme un
+  malware plutôt que comme l'absence d'un abonnement à 99 $/an.
+- La description du paquet et les images du README ne mentionnent plus
+  Windows ni Linux, que la release ne produit pas.
+
+### Ajouté
+
+- `CONTRIBUTING.md` et `CODE_OF_CONDUCT.md`.
+
 ### Corrigé
 
 - **Le nom du produit dans l'interface.** Le titre de fenêtre et l'infobulle
