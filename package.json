@@ -25,6 +25,7 @@
     "verify:pack": "electron test/harness/packaged-app.js",
     "icon:build": "rsvg-convert -w 1024 -h 1024 assets/icon.svg -o assets/icon.png",
     "sound:build": "node tools/build-notification-sound.mjs",
+    "demo:build": "node tools/record-demo.mjs",
     "build": "electron-builder",
     "build:mac": "electron-builder --mac",
     "build:win": "electron-builder --win",
