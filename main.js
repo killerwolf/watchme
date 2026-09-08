@@ -175,9 +175,9 @@ ipcMain.handle(IPC_CHANNELS.SAVE_PREFERENCES, (_event, newPreferences) => {
 ipcMain.on(IPC_CHANNELS.UPDATE_TRAY_TOOLTIP, (_event, numProcesses) => {
   tray.setToolTip(trayTooltip(numProcesses));
 
-  // Le compteur a cote de l'icone : specifique a macOS, ou c'est la facon
-  // native d'afficher un compte dans la barre de menus. setTitle n'existe
-  // pas ailleurs, d'ou la garde.
+  // The count beside the icon is macOS-specific: it is the native way to
+  // show a count in the menu bar. setTitle does not exist anywhere else,
+  // hence the guard.
   if (process.platform === 'darwin') {
     tray.setTitle(trayBadge(numProcesses));
   }
@@ -202,14 +202,13 @@ app.on('before-quit', () => {
   app.isQuitting = true;
 });
 
-// Listener volontairement vide : sa seule presence neutralise le
-// comportement par defaut d'Electron, qui est de quitter l'app quand
-// toutes les fenetres sont fermees.
+// Deliberately empty listener: its mere presence neutralises Electron's
+// default behaviour, which is to quit the app once every window is closed.
 //
-// En pratique il est peu sollicite : le handler `close` ci-dessus masque
-// la fenetre au lieu de la fermer tant que app.isQuitting est faux. Il est
-// conserve faute de pouvoir prouver qu'aucun chemin ne ferme la fenetre
-// sans vouloir quitter. Ne pas le supprimer sans avoir verifie ce point.
+// In practice it is rarely reached: the `close` handler above hides the
+// window instead of closing it while app.isQuitting is false. It is kept
+// because there is no proof that no path closes the window without meaning
+// to quit. Do not remove it without checking that first.
 app.on('window-all-closed', () => {});
 
 app.on('activate', () => {

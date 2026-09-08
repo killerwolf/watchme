@@ -1,7 +1,14 @@
 name: Build, Test, and Release
 
 on:
+  # The `test` job has to run on main, or the workflow badge stays stuck on
+  # "no status": GitHub computes it from runs on the default branch, and a
+  # `pull_request` run is attributed to the PR's branch, not to main. The
+  # `build` job stays guarded by its refs/tags condition, so a push to main
+  # publishes nothing.
   push:
+    branches:
+      - main
     tags:
       - 'v*'
   pull_request:
@@ -53,8 +60,8 @@ jobs:
     permissions:
       contents: write
     env:
-      # Le token fourni par GitHub suffit pour publier sur ce depot :
-      # aucun PAT a maintenir ni a faire tourner.
+      # The token GitHub provides is enough to publish to this repo: no PAT
+      # to maintain or rotate.
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
@@ -67,10 +74,10 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      # --allow-same-version est indispensable depuis que package.json porte
-      # la vraie version : sans lui, npm sort en erreur "Version not changed"
-      # quand le tag correspond deja a la version du fichier. L'etape reste
-      # utile pour un tag pose sans bump prealable.
+      # --allow-same-version became necessary once package.json started
+      # carrying the real version: without it, npm exits with "Version not
+      # changed" when the tag already matches the file. The step is still
+      # useful for a tag pushed without bumping first.
       - name: Set app version
         if: startsWith(github.ref, 'refs/tags/')
         run: |
@@ -83,33 +90,33 @@ jobs:
       - name: Determine release channel
         id: channel
         run: |
-          # Un tag semver de preversion (v1.0.0-rc.1) publie en prerelease.
-          # electron-updater les ignore par defaut : la preversion n'atteint
-          # donc pas les installations existantes. Un tag simple publie en
-          # release normale.
+          # A semver prerelease tag (v1.0.0-rc.1) publishes as a prerelease.
+          # electron-updater ignores those by default, so the prerelease
+          # never reaches existing installs. A plain tag publishes as a
+          # normal release.
           if [[ "${{ github.ref_name }}" == *-* ]]; then
             echo "release_type=prerelease" >> "$GITHUB_OUTPUT"
           else
             echo "release_type=release" >> "$GITHUB_OUTPUT"
           fi
 
-      # La release est creee ICI, avant le build, et c est delibere.
+      # The release is created HERE, before the build, and that is deliberate.
       #
-      # electron-builder lance un publieur par architecture, en parallele.
-      # Si la release n'existe pas encore, les deux essaient de la creer en
-      # meme temps : le premier gagne, le second recoit un
-      # "422 already_exists" qui fait echouer toutes ses mises en ligne.
-      # Constate sur v0.11.1-rc.1 : 1 fichier publie sur 8, 14 erreurs.
+      # electron-builder starts one publisher per architecture, in parallel.
+      # If the release does not exist yet, both try to create it at the same
+      # time: the first wins, the second gets a "422 already_exists" that
+      # fails every one of its uploads. Seen on v0.11.1-rc.1: 1 file
+      # published out of 8, 14 errors.
       #
-      # En la creant au prealable, les deux publieurs la trouvent et se
-      # contentent d'y deposer leurs fichiers. Il n'y a plus rien a courir.
+      # Creating it up front means both publishers find it and simply drop
+      # their files in. There is no longer a race to lose.
       - name: Create GitHub release
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           tag="${{ github.ref_name }}"
 
           if gh release view "$tag" >/dev/null 2>&1; then
-            echo "La release $tag existe deja, elle sera reutilisee."
+            echo "Release $tag already exists, reusing it."
             exit 0
           fi
 
@@ -118,9 +125,9 @@ jobs:
             args+=(--prerelease)
           fi
 
-          # Le CHANGELOG dit le pourquoi des changements, ce qu'une liste de
-          # commits ne fait pas. A defaut de section, on retombe sur les
-          # notes generees par GitHub.
+          # The CHANGELOG says why things changed, which a list of commits
+          # does not. With no matching section, fall back to the notes
+          # GitHub generates.
           version="${tag#v}"
           notes=$(awk -v v="$version" '
             $0 ~ "^## \\[" v "\\]" { found = 1; next }
@@ -132,19 +139,20 @@ jobs:
             printf '%s\n' "$notes" > /tmp/release-notes.md
             args+=(--notes-file /tmp/release-notes.md)
           else
-            echo "Aucune section CHANGELOG pour $version, notes generees."
+            echo "No CHANGELOG section for $version, using generated notes."
             args+=(--generate-notes)
           fi
 
           gh release create "$tag" "${args[@]}"
 
-      # electron-builder depose ses artefacts dans la release ci-dessus.
+      # electron-builder drops its artefacts into the release above.
       #
-      # Deux precautions :
-      #  - on ne publie que sur un tag. `workflow_dispatch` sert a verifier un
-      #    build, pas a creer une release au nom de la version du package.json.
-      #  - releaseType est force. Le defaut d'electron-builder est `draft`, ce
-      #    qui publierait des releases invisibles.
+      # Two precautions:
+      #  - only a tag publishes. `workflow_dispatch` is for verifying a
+      #    build, not for creating a release named after the package.json
+      #    version.
+      #  - releaseType is forced. electron-builder defaults to `draft`,
+      #    which would publish invisible releases.
       - name: Build and publish for mac
         run: |
           if [ "${{ startsWith(github.ref, 'refs/tags/') }}" = "true" ]; then

@@ -1,14 +1,14 @@
-// Demarrage de la VRAIE application (main.js), et non d'un harness qui
-// rejouerait sa logique. C'est le seul test qui execute main.js.
+// Boots the REAL application (main.js), rather than a harness replaying its
+// logic. This is the only test that runs main.js.
 //
-// Portee exacte : il verifie que l'app demarre et ne meurt pas d'elle-meme
-// dans les premieres secondes (crash au chargement des modules ES, erreur
-// de construction du Tray, exception non rattrapee...).
+// Exact scope: it checks the app starts and does not die on its own in the
+// first few seconds (a crash loading the ES modules, a Tray construction
+// error, an uncaught exception, and so on).
 //
-// Ce qu'il ne couvre PAS : le listener `window-all-closed` de main.js.
-// Verifie empiriquement — le supprimer ne fait pas echouer ce test, parce
-// qu'au demarrage la fenetre est masquee (show: false) et non fermee :
-// l'evenement ne se declenche donc jamais pendant le test.
+// What it does NOT cover: the `window-all-closed` listener in main.js.
+// Verified empirically - removing it does not fail this test, because at
+// startup the window is hidden (show: false) rather than closed, so the
+// event never fires during the test.
 
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -20,7 +20,7 @@ import electron from 'electron';
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const BOOT_GRACE_MS = 8000;
 
-test("l'application demarre et reste vivante", async () => {
+test('the application starts and stays alive', async () => {
   const child = spawn(electron, [ROOT], {
     cwd: ROOT,
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -45,14 +45,14 @@ test("l'application demarre et reste vivante", async () => {
 
   assert.ok(
     outcome.alive,
-    `l'app a quitte d'elle-meme (code ${outcome.code}).\n` +
-      "Si le listener 'window-all-closed' de main.js a ete supprime, c'est " +
-      `la cause : Electron quitte alors des que la fenetre se cache.\n${stderr}`
+    `the app quit on its own (code ${outcome.code}).\n` +
+      "If the 'window-all-closed' listener in main.js was removed, that is " +
+      `the cause: Electron then quits as soon as the window hides.\n${stderr}`
   );
 
-  // Un demarrage propre ne doit pas cracher au chargement des modules ES
+  // A clean startup must not crash while loading the ES modules
   assert.ok(
     !stderr.includes('ERR_MODULE_NOT_FOUND'),
-    `module introuvable au demarrage :\n${stderr}`
+    `module not found at startup:\n${stderr}`
   );
 });

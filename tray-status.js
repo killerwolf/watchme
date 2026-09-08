@@ -16,7 +16,5 @@ export function trayBadge(count) {
 }
 
 export function trayTooltip(count) {
-  return `Script Watcher - Monitoring ${count} process${
-    count === 1 ? '' : 'es'
-  }`;
+  return `WatchMe - Monitoring ${count} process${count === 1 ? '' : 'es'}`;
 }

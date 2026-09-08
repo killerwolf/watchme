@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>WatchMe — get told the moment a process finishes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="A macOS menu bar app that watches running processes and tells you the moment one exits. Tick a build, a test run or a big download, get on with something else, and let the notification find you. Free and open source."
+    />
+    <link rel="canonical" href="https://h4md1.fr/watchme/" />
+
+    <link rel="icon" type="image/png" sizes="256x256" href="icon-256.png" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <meta name="theme-color" content="#0098ff" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="WatchMe" />
+    <meta property="og:title" content="WatchMe — get told the moment a process finishes" />
+    <meta
+      property="og:description"
+      content="A macOS menu bar app that watches running processes and tells you the moment one exits. Free and open source."
+    />
+    <meta property="og:url" content="https://h4md1.fr/watchme/" />
+    <meta property="og:image" content="https://h4md1.fr/watchme/social-preview.png" />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="640" />
+    <meta
+      property="og:image:alt"
+      content="WatchMe: the app window searching for “make” and finding the running build process."
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="WatchMe — get told the moment a process finishes" />
+    <meta
+      name="twitter:description"
+      content="A macOS menu bar app that watches running processes and tells you the moment one exits. Free and open source."
+    />
+    <meta name="twitter:image" content="https://h4md1.fr/watchme/social-preview.png" />
+
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #ffffff;
+        --bg-alt: #f4f7fa;
+        --bg-sunk: #e7edf3;
+        --fg: #14181c;
+        --fg-mut: #566270;
+        --line: #dde5ed;
+        --accent: #0077cc;
+        --accent-fg: #ffffff;
+        --good: #16a34a;
+        --warn-soft: #fff7e6;
+        --warn-line: #e0a300;
+        --radius: 14px;
+        --wrap: 960px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0e1013;
+          --bg-alt: #161a20;
+          --bg-sunk: #1d222a;
+          --fg: #eef1f5;
+          --fg-mut: #a1acba;
+          --line: #252c36;
+          --accent: #4db4ff;
+          --accent-fg: #08131d;
+          --good: #4ade80;
+          --warn-soft: #241d0d;
+          --warn-line: #d9a521;
+        }
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; background: var(--bg); color: var(--fg);
+        font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap { max-width: var(--wrap); margin: 0 auto; padding: 0 22px; }
+      a { color: var(--accent); text-underline-offset: 2px; }
+      a:hover { text-decoration: none; }
+      .skip {
+        position: absolute; left: -9999px; background: var(--accent);
+        color: var(--accent-fg); padding: 10px 16px; z-index: 10;
+      }
+      .skip:focus { left: 0; top: 0; }
+
+      /* hero */
+      .hero {
+        background: var(--bg-alt); border-bottom: 1px solid var(--line);
+        padding: 44px 0 0; text-align: center;
+      }
+      .hero img.app-icon { border-radius: 22px; }
+      h1 {
+        margin: 20px 0 0; font-size: clamp(2.1rem, 5.4vw, 3.2rem);
+        line-height: 1.08; letter-spacing: -0.03em;
+      }
+      .lede {
+        margin: 18px auto 0; font-size: 1.15rem; color: var(--fg-mut);
+        max-width: 56ch;
+      }
+      .lede strong { color: var(--fg); }
+
+      .shot {
+        margin: 36px auto -60px; max-width: 860px;
+        border-radius: var(--radius); border: 1px solid var(--line);
+        box-shadow: 0 22px 50px rgba(20, 24, 28, 0.18);
+        overflow: hidden; background: var(--bg); display: block;
+      }
+      .shot img { display: block; width: 100%; height: auto; }
+      @media (prefers-color-scheme: dark) {
+        .shot { box-shadow: 0 22px 50px rgba(0, 0, 0, 0.5); }
+      }
+
+      /* download */
+      .downloads { padding: 92px 0 0; text-align: center; }
+      .dl-row {
+        display: flex; flex-wrap: wrap; gap: 14px; justify-content: center;
+        margin-top: 26px;
+      }
+      .btn {
+        display: inline-flex; flex-direction: column; align-items: center;
+        gap: 2px; text-decoration: none; border-radius: var(--radius);
+        padding: 14px 26px; font-weight: 600; font-size: 1rem;
+        background: var(--accent); color: var(--accent-fg);
+        border: 1px solid transparent; min-width: 220px;
+      }
+      .btn:hover { filter: brightness(1.08); }
+      .btn small { font-weight: 500; font-size: 0.78rem; opacity: 0.85; }
+      .btn.ghost {
+        background: var(--bg); color: var(--fg); border-color: var(--line);
+      }
+      .btn.ghost:hover { border-color: var(--accent); color: var(--accent); filter: none; }
+      .hint { margin-top: 16px; font-size: 0.9rem; color: var(--fg-mut); }
+      .meta { margin-top: 10px; font-size: 0.85rem; color: var(--fg-mut); }
+
+      /* sections */
+      .section { padding: 64px 0 0; }
+      .section h2 {
+        margin: 0; font-size: clamp(1.4rem, 3.2vw, 1.95rem);
+        letter-spacing: -0.02em; line-height: 1.2;
+      }
+      .sub { color: var(--fg-mut); margin: 12px 0 0; max-width: 64ch; }
+
+      /* gotcha */
+      .gotcha {
+        margin-top: 22px; background: var(--warn-soft);
+        border: 1px solid var(--line); border-left: 4px solid var(--warn-line);
+        border-radius: 0 var(--radius) var(--radius) 0; padding: 20px 22px;
+      }
+      .gotcha h3 { margin: 0; font-size: 1.02rem; }
+      .gotcha p { color: var(--fg-mut); margin: 10px 0 0; }
+      .copy {
+        display: flex; align-items: center; gap: 10px; margin-top: 14px;
+        background: var(--bg); border: 1px solid var(--line);
+        border-radius: 10px; padding: 6px 6px 6px 14px; overflow: hidden;
+      }
+      .copy code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.88rem; white-space: nowrap; overflow-x: auto; flex: 1;
+      }
+      .copy-btn {
+        border: 0; cursor: pointer; border-radius: 8px; flex: none;
+        background: var(--accent); color: var(--accent-fg);
+        padding: 8px 14px; font: inherit; font-size: 0.84rem; font-weight: 600;
+      }
+      .copy-btn:hover { filter: brightness(1.08); }
+
+      /* steps */
+      .steps {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+        margin-top: 24px; padding: 0; list-style: none;
+      }
+      @media (max-width: 760px) { .steps { grid-template-columns: 1fr; } }
+      .steps li {
+        border: 1px solid var(--line); border-radius: var(--radius);
+        padding: 20px; background: var(--bg-alt);
+      }
+      .steps h3 { margin: 0 0 8px; font-size: 1rem; }
+      .steps p { margin: 0; color: var(--fg-mut); font-size: 0.95rem; }
+      .pill {
+        display: inline-block; border-radius: 6px; padding: 1px 7px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.85em; background: var(--bg-sunk); color: var(--fg);
+      }
+
+      /* fit: yes / no */
+      .fit { margin-top: 24px; display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
+      @media (max-width: 760px) { .fit { grid-template-columns: 1fr; } }
+      .fit div {
+        border: 1px solid var(--line); border-radius: var(--radius); padding: 20px;
+      }
+      .fit h3 { margin: 0 0 10px; font-size: 1rem; }
+      .fit ul { margin: 0; padding-left: 20px; color: var(--fg-mut); }
+      .fit li + li { margin-top: 8px; }
+      .fit .yes h3 { color: var(--good); }
+      .fit .no h3 { color: var(--fg-mut); }
+
+      .table-scroll { overflow-x: auto; margin-top: 22px; }
+      table {
+        border-collapse: collapse; width: 100%; font-size: 0.95rem;
+        border: 1px solid var(--line); border-radius: var(--radius);
+        overflow: hidden;
+      }
+      th, td { text-align: left; padding: 11px 16px; border-bottom: 1px solid var(--line); }
+      tbody tr:last-child td { border-bottom: 0; }
+      th {
+        background: var(--bg-alt); font-size: 0.8rem; letter-spacing: 0.03em;
+        text-transform: uppercase; color: var(--fg-mut);
+      }
+
+      .privacy { margin-top: 24px; padding: 0; list-style: none; }
+      .privacy li {
+        padding: 12px 0 12px 30px; border-bottom: 1px solid var(--line);
+        color: var(--fg-mut); position: relative;
+      }
+      .privacy li:last-child { border-bottom: 0; }
+      .privacy li::before {
+        content: "✓"; position: absolute; left: 4px; color: var(--good); font-weight: 700;
+      }
+      .privacy strong { color: var(--fg); }
+
+      .footer {
+        margin-top: 80px; padding: 36px 0 56px;
+        border-top: 1px solid var(--line); background: var(--bg-alt);
+        text-align: center;
+      }
+      .footer p { color: var(--fg-mut); font-size: 0.92rem; }
+      .footer .fine { font-size: 0.85rem; margin-bottom: 0; }
+    </style>
+  </head>
+
+  <body>
+    <a class="skip" href="#download">Skip to download</a>
+
+    <header class="hero">
+      <div class="wrap">
+        <img class="app-icon" src="icon-256.png" alt="" width="88" height="88" />
+        <h1>Stop checking whether<br />it's finished yet.</h1>
+        <p class="lede">
+          WatchMe sits in the menu bar, watches the processes you tick, and
+          <strong>notifies you the second one of them ends</strong>. Start the
+          build, go and do something else.
+        </p>
+        <div class="shot">
+          <img
+            src="screenshot.png"
+            alt="The WatchMe window: a search box filtered to “make”, and one result — PID 74731, name make, command /Applications/Xcode.app/Contents/Developer/usr/bin/make build — with a checkbox to start watching it."
+            width="1593" height="800"
+          />
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section id="download" class="downloads">
+        <div class="wrap">
+          <h2>Download for macOS</h2>
+          <p class="sub" style="margin-left: auto; margin-right: auto">
+            Free and open source. Pick the build that matches your Mac.
+          </p>
+          <div class="dl-row">
+            <a class="btn" id="dl-arm" href="https://github.com/killerwolf/watchme/releases/latest">
+              Apple Silicon
+              <small>M1, M2, M3, M4</small>
+            </a>
+            <a class="btn ghost" id="dl-intel" href="https://github.com/killerwolf/watchme/releases/latest">
+              Intel
+              <small>older Macs</small>
+            </a>
+          </div>
+          <p class="hint">
+            Not sure which you have? Apple menu → About This Mac. “Apple M…”
+            means Apple Silicon. Requires macOS 13 (Ventura) or later.
+          </p>
+          <p class="meta" id="rel-meta">
+            <a href="https://github.com/killerwolf/watchme/releases">All releases</a>
+            ·
+            <a href="https://github.com/killerwolf/watchme/blob/main/CHANGELOG.md">Changelog</a>
+          </p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="wrap">
+          <div class="gotcha">
+            <h3>First launch: macOS will complain</h3>
+            <p>
+              WatchMe isn't signed with a paid Apple Developer certificate, so
+              Gatekeeper blocks it the first time. This is the absence of a
+              $99/year subscription, not a verdict on the app.
+            </p>
+            <p>
+              If macOS says the developer <strong>cannot be verified</strong>:
+              right-click the app in Applications → <strong>Open</strong> →
+              <strong>Open</strong>. Once only. If it says the app is
+              <strong>damaged and can't be opened</strong>, clear the quarantine
+              flag instead:
+            </p>
+            <div class="copy" data-copy="xattr -cr /Applications/WatchMe.app">
+              <code>xattr -cr /Applications/WatchMe.app</code>
+              <button type="button" class="copy-btn" aria-label="Copy command">Copy</button>
+            </div>
+            <p>
+              You'll need to repeat this after installing a new version. Prefer
+              neither? The source is on
+              <a href="https://github.com/killerwolf/watchme">GitHub</a> and the
+              build is one command.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="wrap">
+          <h2>Tick it, forget it, get told</h2>
+          <ol class="steps">
+            <li>
+              <h3>1. Find the process</h3>
+              <p>
+                Click the menu bar icon and type in the search box. Every running
+                process is there, with its PID and full command.
+              </p>
+            </li>
+            <li>
+              <h3>2. Tick the box</h3>
+              <p>
+                WatchMe checks every <span class="pill">5s</span> whether it's
+                still alive. The count sits next to the menu bar icon so you know
+                it's working.
+              </p>
+            </li>
+            <li>
+              <h3>3. Go and do something else</h3>
+              <p>
+                A desktop notification and a sound the moment it exits. No
+                terminal window left in the corner of your eye.
+              </p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="wrap">
+          <h2>Is this the right tool?</h2>
+          <div class="fit">
+            <div class="yes">
+              <h3>Yes, if</h3>
+              <ul>
+                <li>You run long builds, test suites, migrations or big downloads.</li>
+                <li>
+                  You'd rather not append
+                  <span class="pill">&amp;&amp; osascript -e …</span> to every
+                  command you run.
+                </li>
+                <li>You want it out of the way — menu bar, no Dock icon.</li>
+              </ul>
+            </div>
+            <div class="no">
+              <h3>No, if</h3>
+              <ul>
+                <li>
+                  You want CPU, memory or I/O metrics, or the ability to kill
+                  processes. Activity Monitor and <span class="pill">htop</span>
+                  are built for that.
+                </li>
+                <li>
+                  You're on Windows or Linux. Only macOS binaries are published
+                  today.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="wrap">
+          <h2>Two ways to cut the list down</h2>
+          <p class="sub">
+            A busy Mac runs several hundred processes. Both filters match on the
+            name and the full command.
+          </p>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>Filter</th><th>What it does</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>Search box</td>
+                  <td>Narrows the list as you type. For right now.</td>
+                </tr>
+                <tr>
+                  <td>Prefilter regex</td>
+                  <td>
+                    A case-insensitive pattern in Preferences, applied every time
+                    the list loads. <span class="pill">node|ffmpeg</span> shows
+                    only those.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Auto Launch</td>
+                  <td>Optional. Starts WatchMe when you log in.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="wrap">
+          <h2>It can't phone home</h2>
+          <ul class="privacy">
+            <li>
+              <strong>No network access at all.</strong> The window runs under a
+              <span class="pill">default-src 'none'</span> Content Security
+              Policy. The icons and the notification sound are bundled. Nothing
+              about your processes leaves the machine, because nothing can.
+            </li>
+            <li>
+              <strong>No account, no telemetry, no update check.</strong> It
+              reads the process table and that is the whole of it.
+            </li>
+            <li>
+              <strong>Two runtime dependencies.</strong>
+              <a href="https://github.com/sindresorhus/ps-list">ps-list</a> to
+              read the process table, and
+              <a href="https://github.com/sindresorhus/electron-store">electron-store</a>
+              to remember your preferences.
+            </li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap">
+        <p>
+          <a href="https://github.com/killerwolf/watchme">GitHub</a>
+          ·
+          <a href="https://github.com/killerwolf/watchme/releases">Releases</a>
+          ·
+          <a href="https://github.com/killerwolf/watchme/issues">Report a bug</a>
+          ·
+          <a href="https://github.com/killerwolf/watchme/blob/main/LICENSE">MIT + attribution</a>
+        </p>
+        <p class="fine">Built by Hamdi Laadhari. macOS only, for now.</p>
+      </div>
+    </footer>
+
+    <script>
+      // Copy-to-clipboard for the xattr command.
+      for (const box of document.querySelectorAll(".copy")) {
+        const btn = box.querySelector(".copy-btn");
+        btn.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(box.dataset.copy);
+            const was = btn.textContent;
+            btn.textContent = "Copied";
+            setTimeout(() => { btn.textContent = was; }, 1600);
+          } catch {
+            // Clipboard denied — the command is visible right there.
+          }
+        });
+      }
+
+      // Point the download buttons at the actual DMGs of the newest release.
+      // Asset names carry the version, so there is no stable "latest" URL for
+      // them; the buttons fall back to the releases page until this resolves.
+      (async () => {
+        try {
+          const res = await fetch(
+            "https://api.github.com/repos/killerwolf/watchme/releases/latest",
+            { headers: { Accept: "application/vnd.github+json" } }
+          );
+          if (!res.ok) return;
+          const rel = await res.json();
+          const dmg = (arch) =>
+            (rel.assets || []).find(
+              (a) => a.name.endsWith(".dmg") && a.name.includes(arch)
+            );
+          const arm = dmg("arm64");
+          const intel = dmg("x64");
+          if (arm) document.getElementById("dl-arm").href = arm.browser_download_url;
+          if (intel) document.getElementById("dl-intel").href = intel.browser_download_url;
+          if (rel.tag_name) {
+            const meta = document.getElementById("rel-meta");
+            const date = rel.published_at
+              ? new Date(rel.published_at).toLocaleDateString(undefined, {
+                  year: "numeric", month: "long", day: "numeric",
+                })
+              : null;
+            meta.insertAdjacentHTML(
+              "afterbegin",
+              `${rel.tag_name}${date ? ` — ${date}` : ""} · `
+            );
+          }
+        } catch {
+          // Offline, rate-limited, or blocked: the static links still work.
+        }
+      })();
+    </script>
+  </body>
+</html>

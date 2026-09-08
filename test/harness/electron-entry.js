@@ -1,12 +1,12 @@
-// Harness execute PAR Electron (et non par node).
+// Harness run BY Electron, not by node.
 //
-// Il rejoue, dans le processus principal, chaque API Electron dont depend
-// `main.js`, puis sort avec un code de retour. C'est le filet qui doit
-// attraper les regressions de la montee Electron 32 -> 43 (cf. issue #14) :
-// un binding disparu ou renomme fait echouer le test au lieu de produire
-// une app qui se lance mais ne fonctionne plus.
+// It replays, in the main process, every Electron API `main.js` depends on,
+// then exits with a status code. This is the net meant to catch regressions
+// from the Electron 32 -> 43 upgrade (see issue #14): a binding that has
+// disappeared or been renamed fails the test, instead of producing an app
+// that launches but no longer works.
 //
-// Lance via `npx electron test/harness/electron-entry.js`.
+// Run with `npx electron test/harness/electron-entry.js`.
 
 import assert from 'node:assert/strict';
 import { existsSync, rmSync, writeFileSync } from 'node:fs';
@@ -33,35 +33,35 @@ function check(label, fn) {
   checks.push({ label, fn });
 }
 
-// --- Ce que main.js fait au demarrage -------------------------------------
+// --- What main.js does on startup -----------------------------------------
 
-check('app.whenReady() se resout', async () => {
+check('app.whenReady() resolves', async () => {
   await app.whenReady();
 });
 
-check("l'icone du tray existe et se charge", () => {
+check('the tray icon exists and loads', () => {
   const iconPath = path.join(ROOT, 'misc/tray-icon.png');
-  assert.ok(existsSync(iconPath), `icone introuvable : ${iconPath}`);
+  assert.ok(existsSync(iconPath), `icon not found: ${iconPath}`);
 
   let trayIcon = nativeImage.createFromPath(iconPath);
-  assert.ok(!trayIcon.isEmpty(), 'nativeImage a charge une image vide');
+  assert.ok(!trayIcon.isEmpty(), 'nativeImage loaded an empty image');
 
-  // main.js redimensionne puis marque l'image comme template sur macOS
+  // main.js resizes, then marks the image as a template on macOS
   trayIcon = trayIcon.resize({ width: 16, height: 12 });
-  assert.ok(!trayIcon.isEmpty(), 'image vide apres resize');
+  assert.ok(!trayIcon.isEmpty(), 'empty image after resize');
   if (process.platform === 'darwin') {
     trayIcon.setTemplateImage(true);
     assert.equal(trayIcon.isTemplateImage(), true);
   }
 });
 
-check('un Tray peut etre construit et expose getBounds()', () => {
+check('a Tray can be constructed and exposes getBounds()', () => {
   const trayIcon = nativeImage
     .createFromPath(path.join(ROOT, 'misc/tray-icon.png'))
     .resize({ width: 16, height: 12 });
   const tray = new Tray(trayIcon);
 
-  // showWindow() depend de getBounds() pour positionner la fenetre
+  // showWindow() depends on getBounds() to position the window
   const bounds = tray.getBounds();
   for (const key of ['x', 'y', 'width', 'height']) {
     assert.equal(typeof bounds[key], 'number', `getBounds().${key}`);
@@ -69,8 +69,8 @@ check('un Tray peut etre construit et expose getBounds()', () => {
   tray.destroy();
 });
 
-check('tray.setTitle() porte le compteur affiche a cote de l icone', () => {
-  // Le badge repose sur setTitle, qui n'existe que sur macOS.
+check('tray.setTitle() carries the count shown beside the icon', () => {
+  // The badge relies on setTitle, which only exists on macOS.
   if (process.platform !== 'darwin') return;
 
   const trayIcon = nativeImage
@@ -78,30 +78,30 @@ check('tray.setTitle() porte le compteur affiche a cote de l icone', () => {
     .resize({ width: 16, height: 12 });
   const tray = new Tray(trayIcon);
 
-  assert.equal(typeof tray.setTitle, 'function', 'setTitle a disparu');
+  assert.equal(typeof tray.setTitle, 'function', 'setTitle has disappeared');
 
   tray.setTitle(trayBadge(3));
-  assert.equal(tray.getTitle(), '3', 'le compteur ne sest pas applique');
+  assert.equal(tray.getTitle(), '3', 'the count was not applied');
 
-  // Zero processus surveille : le badge doit disparaitre, pas afficher 0.
+  // Zero processes watched: the badge must disappear, not show 0.
   tray.setTitle(trayBadge(0));
-  assert.equal(tray.getTitle(), '', 'le badge aurait du etre efface');
+  assert.equal(tray.getTitle(), '', 'the badge should have been cleared');
 
   tray.destroy();
 });
 
-check('screen.getDisplayNearestPoint() renvoie des bounds exploitables', () => {
+check('screen.getDisplayNearestPoint() returns usable bounds', () => {
   const display = screen.getDisplayNearestPoint({ x: 0, y: 0 });
-  assert.ok(display, 'aucun display retourne');
+  assert.ok(display, 'no display returned');
   for (const key of ['x', 'y', 'width', 'height']) {
     assert.equal(typeof display.bounds[key], 'number', `bounds.${key}`);
   }
 });
 
 check(
-  'une BrowserWindow avec les webPreferences de main.js charge index.html',
+  'a BrowserWindow with the webPreferences from main.js loads index.html',
   async () => {
-    // Les memes handlers que main.js, pour exercer le pont IPC de bout en bout.
+    // The same handlers as main.js, to exercise the IPC bridge end to end.
     ipcMain.handle(IPC_CHANNELS.GET_PROCESSES, () => psList());
     ipcMain.handle(IPC_CHANNELS.GET_PREFERENCES, () => ({
       autoLaunch: false,
@@ -119,7 +119,7 @@ check(
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
-        sandbox: false, // voir main.js pour la justification
+        sandbox: false, // see main.js for the rationale
         preload: path.join(ROOT, 'preload.js'),
       },
     });
@@ -127,9 +127,9 @@ check(
     await win.loadFile(path.join(ROOT, 'index.html'));
 
     const title = await win.webContents.executeJavaScript('document.title');
-    assert.ok(title.length > 0, 'le document ne sest pas charge');
+    assert.ok(title.length > 0, 'the document did not load');
 
-    // Le pont contextBridge doit etre en place cote renderer
+    // The contextBridge bridge must be in place on the renderer side
     const bridge = await win.webContents.executeJavaScript(
       'Object.keys(window.electronAPI || {}).sort()'
     );
@@ -140,33 +140,33 @@ check(
     ]) {
       assert.ok(
         bridge.includes(method),
-        `window.electronAPI.${method} absent — le preload na pas ete applique`
+        `window.electronAPI.${method} missing - the preload was not applied`
       );
     }
 
-    // Aller-retour complet renderer -> preload -> ipcMain -> ps-list
+    // Full round trip renderer -> preload -> ipcMain -> ps-list
     const processCount = await win.webContents.executeJavaScript(
       'window.electronAPI.getProcesses().then((p) => p.length)'
     );
     assert.ok(
       processCount > 0,
-      'le renderer na recu aucun processus a travers le pont IPC'
+      'the renderer received no processes through the IPC bridge'
     );
 
-    // save-preferences est un aller-retour invoke/handle (comme
-    // get-processes), pas un send/on fire-and-forget : le renderer doit
-    // recevoir le resultat retourne par le handler.
+    // save-preferences is an invoke/handle round trip (like get-processes),
+    // not a fire-and-forget send/on: the renderer must receive the result
+    // returned by the handler.
     const saveResult = await win.webContents.executeJavaScript(
       "window.electronAPI.savePreferences({ autoLaunch: true, prefilterRegex: '' })"
     );
     assert.deepEqual(
       saveResult,
       { loginItemSuccess: true },
-      'save-preferences doit renvoyer le resultat du handler via invoke'
+      'save-preferences must return the handler result through invoke'
     );
 
-    // Non-regression XSS (cf. issue #6) : le nom d'un processus arrive
-    // jusqu'a la notification de repli. Il doit rester du texte.
+    // XSS non-regression (see issue #6): a process name travels all the way
+    // to the fallback notification. It has to stay text.
     const payload = '<img src=x onerror="window.__pwned = true">';
     const xss = await win.webContents.executeJavaScript(`
       (() => {
@@ -179,15 +179,15 @@ check(
         };
       })()
     `);
-    assert.equal(xss.injectedImages, 0, 'le markup injecte a ete interprete');
-    assert.equal(xss.pwned, false, 'le handler onerror a ete execute');
+    assert.equal(xss.injectedImages, 0, 'the injected markup was interpreted');
+    assert.equal(xss.pwned, false, 'the onerror handler ran');
     assert.ok(
       xss.renderedText.includes(payload),
-      'le message doit safficher comme texte litteral'
+      'the message must render as literal text'
     );
 
-    // Hors-ligne et CSP (cf. issue #7) : aucune ressource distante, et les
-    // icones doivent avoir des dimensions reelles une fois rendues.
+    // Offline and CSP (see issue #7): no remote resources, and the icons
+    // must have real dimensions once rendered.
     const offline = await win.webContents.executeJavaScript(`
       (() => {
         const remote = [...document.querySelectorAll('link[href], script[src], img[src]')]
@@ -202,17 +202,13 @@ check(
         };
       })()
     `);
-    assert.deepEqual(offline.remote, [], 'ressources distantes referencees');
-    assert.equal(offline.csp, true, 'aucune balise CSP');
-    assert.equal(
-      offline.iconCount,
-      4,
-      'les 4 icones inline doivent etre presentes'
-    );
-    assert.equal(offline.unsized, 0, 'une icone a une largeur nulle');
+    assert.deepEqual(offline.remote, [], 'remote resources referenced');
+    assert.equal(offline.csp, true, 'no CSP meta tag');
+    assert.equal(offline.iconCount, 4, 'the 4 inline icons must be present');
+    assert.equal(offline.unsized, 0, 'an icon has zero width');
 
-    // Le son de notification doit se charger DANS le renderer (cf. #17) :
-    // le chemin doit resoudre et la CSP autoriser media-src.
+    // The notification sound has to load INSIDE the renderer (see #17):
+    // the path must resolve and the CSP must allow media-src.
     const sound = await win.webContents.executeJavaScript(`
       new Promise((resolve) => {
         const audio = new Audio('misc/notification-sound.wav');
@@ -228,9 +224,9 @@ check(
     assert.equal(
       sound.ok,
       true,
-      `le son de notification ne se charge pas (code ${sound.code})`
+      `the notification sound does not load (code ${sound.code})`
     );
-    assert.ok(sound.duration > 0.5, 'duree du son inattendue');
+    assert.ok(sound.duration > 0.5, 'unexpected sound duration');
 
     win.destroy();
     ipcMain.removeHandler(IPC_CHANNELS.GET_PROCESSES);
@@ -239,16 +235,16 @@ check(
   }
 );
 
-check('app.dock est disponible sur macOS', () => {
+check('app.dock is available on macOS', () => {
   if (process.platform !== 'darwin') return;
-  assert.ok(app.dock, 'app.dock absent : main.js appelle app.dock.hide()');
+  assert.ok(app.dock, 'app.dock missing: main.js calls app.dock.hide()');
   assert.equal(typeof app.dock.hide, 'function');
 });
 
-// --- Persistance des preferences ------------------------------------------
+// --- Preference persistence -----------------------------------------------
 
-check('electron-store fait un round-trip sur la forme des preferences', () => {
-  // Nom dedie : on ne touche pas au fichier de preferences reel.
+check('electron-store round-trips the preferences shape', () => {
+  // Dedicated name: the real preferences file is left alone.
   const store = new Store({ name: 'watchme-test-preferences' });
 
   const defaults = { autoLaunch: false, prefilterRegex: '' };
@@ -258,19 +254,18 @@ check('electron-store fait un round-trip sur la forme des preferences', () => {
   store.set('preferences', written);
   assert.deepEqual(store.get('preferences'), written);
 
-  // Le chemin est logge : il sert de reference pour la montee
-  // electron-store 10 -> 11 (cf. issue #15).
+  // The path is logged: it is the reference point for the
+  // electron-store 10 -> 11 upgrade (see issue #15).
   console.log(`    store path: ${store.path}`);
-  assert.ok(store.path.endsWith('.json'), 'le store doit etre un fichier JSON');
+  assert.ok(store.path.endsWith('.json'), 'the store must be a JSON file');
 
   store.clear();
 });
 
-check('electron-store relit un fichier de config pre-existant', () => {
-  // Garde-fou de migration (cf. issue #15). Les preferences d'un
-  // utilisateur existant ne doivent jamais etre perdues par une montee de
-  // version d'electron-store. On ecrit un fichier a la main, dans le format
-  // historique, puis on verifie qu'un Store neuf le relit tel quel.
+check('electron-store reads back a pre-existing config file', () => {
+  // Migration guard (see issue #15). An existing user's preferences must
+  // never be lost to an electron-store version bump. Write a file by hand,
+  // in the historical format, then check a fresh Store reads it as is.
   const name = 'watchme-migration-probe';
   const file = path.join(app.getPath('userData'), `${name}.json`);
   const existing = {
@@ -283,25 +278,25 @@ check('electron-store relit un fichier de config pre-existant', () => {
   assert.deepEqual(
     store.get('preferences'),
     existing.preferences,
-    'les preferences d un utilisateur existant ne sont pas relues'
+    'an existing user preferences are not read back'
   );
   assert.equal(
     store.path,
     file,
-    'le chemin du fichier de config a change : les utilisateurs perdraient leurs reglages'
+    'the config file path changed: users would lose their settings'
   );
 
   rmSync(file, { force: true });
 });
 
-check('app.setLoginItemSettings() est appelable', () => {
-  // main.js l'entoure deja d'un try/catch : on verifie juste que
-  // le binding existe toujours.
+check('app.setLoginItemSettings() is callable', () => {
+  // main.js already wraps it in a try/catch: this only checks the binding
+  // still exists.
   assert.equal(typeof app.setLoginItemSettings, 'function');
   assert.equal(typeof app.getLoginItemSettings, 'function');
 });
 
-// --- Execution -------------------------------------------------------------
+// --- Run -------------------------------------------------------------------
 
 async function run() {
   let failed = 0;
@@ -317,7 +312,7 @@ async function run() {
     }
   }
 
-  console.log(`\n${checks.length - failed}/${checks.length} verifications OK`);
+  console.log(`\n${checks.length - failed}/${checks.length} checks OK`);
   app.exit(failed === 0 ? 0 : 1);
 }
 

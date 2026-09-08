@@ -1,123 +1,163 @@
 # Changelog
 
-Toutes les évolutions notables de WatchMe sont consignées ici.
+Every notable change to WatchMe is recorded here.
 
-Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/),
-et le projet respecte le [versionnage sémantique](https://semver.org/lang/fr/).
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and the project adheres to [semantic versioning](https://semver.org/).
+
+## [Unreleased]
+
+### Changed
+
+- **The README now says what the app does, and who it is for.** An "Is this
+  the right tool?" section names outright what WatchMe does *not* do — no
+  metrics, no killing processes — and the activity monitor that does. The
+  download link and the first-launch Gatekeeper warning move to the top of
+  the page: an unsigned application reports "damaged and can't be opened",
+  which most people read as malware rather than as the absence of a $99/year
+  subscription.
+- The package description and the README no longer mention Windows or Linux,
+  which the release does not produce.
+- **Everything in the repository is now written in English** — this file,
+  the contributing guide, the code of conduct, and every code comment and
+  test name. The README was already English; the rest was French, which made
+  the project readable to a smaller set of people than it deserves.
+
+### Added
+
+- `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`.
+- A social preview card (`.github/assets/social-preview.png`). Until now,
+  every link to the repository pasted into Slack or anywhere else rendered as
+  grey text.
+- **A landing page at <https://h4md1.fr/watchme/>**, published from `site/` by
+  `.github/workflows/pages.yml`. Its download buttons resolve the newest
+  release's DMGs through the GitHub API, so there is no version number to
+  update by hand, and it carries its own Open Graph metadata — the repository
+  social preview does not cover a link to the site.
+
+### Removed
+
+- Documentation no longer ships inside the packaged application. `README.md`,
+  `CHANGELOG.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `CLAUDE.md`,
+  `docs/` and `.npmcheckrc` were all embedded in the `asar`, where they serve
+  no purpose at runtime. Same reasoning as the demo GIF in 0.11.0. (#12)
+
+### Fixed
+
+- **The product name in the interface.** The window title and the tray
+  tooltip still announced "Script Watcher", the previous name. Two surfaces
+  seen on every launch, carrying a name that exists nowhere else. (#18)
 
 ## [0.11.1] - 2026-08-21
 
-Version de tuyauterie : **le binaire est fonctionnellement identique à la
-v0.11.0**. Elle acte la refonte de la publication et sert de première release
-du nouveau chemin.
+A plumbing release: **the binary is functionally identical to v0.11.0**. It
+records the publishing rework and serves as the first release down the new
+path.
 
-### Modifié
+### Changed
 
-- La release est désormais publiée par **electron-builder** lui-même, et non
-  plus par un job séparé qui retéléchargeait les artefacts pour les reposter.
-  Un job de moins, et surtout la génération des `latest-mac.yml` et `.blockmap`
-  dont `electron-updater` aura besoin le jour où l'on voudra la mise à jour
-  automatique. Aligne WatchMe sur le workflow de QuickToss. (#49)
-- Le corps de la release est alimenté depuis ce fichier, avec repli sur les
-  notes générées par GitHub à défaut de section correspondante.
-- Un tag de préversion (`v0.11.1-rc.1`) publie désormais en *pre-release*, que
-  `electron-updater` ignore par défaut.
-- `rimraf` monte en 6.x, les actions GitHub en v7.
+- The release is now published by **electron-builder** itself, rather than by
+  a separate job that re-downloaded the artefacts to re-upload them. One job
+  fewer, and — more importantly — the `latest-mac.yml` and `.blockmap` files
+  that `electron-updater` will need the day automatic updates are wanted.
+  Brings WatchMe in line with the QuickToss workflow. (#49)
+- The release body is fed from this file, falling back to GitHub's generated
+  notes when there is no matching section.
+- A prerelease tag (`v0.11.1-rc.1`) now publishes as a *pre-release*, which
+  `electron-updater` ignores by default.
+- `rimraf` moves to 6.x, the GitHub actions to v7.
 
-### Corrigé
+### Fixed
 
-- **Course à la création de la release.** electron-builder lance un publieur
-  par architecture, en parallèle : les deux tentaient de créer la release en
-  même temps et le perdant recevait un `422 already_exists` qui faisait échouer
-  toutes ses mises en ligne. Constaté sur `v0.11.1-rc.1` — 1 fichier publié sur
-  8. La release est maintenant créée avant le build, il n'y a plus rien à
-  courir.
+- **Race to create the release.** electron-builder starts one publisher per
+  architecture, in parallel: both were trying to create the release at the
+  same time, and the loser got a `422 already_exists` that failed every one
+  of its uploads. Seen on `v0.11.1-rc.1` — 1 file published out of 8. The
+  release is now created before the build, so there is no race left to lose.
 
 ## [0.11.0] - 2026-08-21
 
-### Ajouté
+### Added
 
-- **Le son de notification existe enfin.** `renderer.js` référençait un
-  `notification-sound.mp3` absent du dépôt : la fonctionnalité annoncée par le
-  README n'a jamais émis un son. Remplacé par une courte fanfare de fin de
-  style Super Nintendo, générée par `tools/build-notification-sound.mjs`
-  (`npm run sound:build`) et livrée en WAV — lu nativement par Chromium, sans
-  dépendance à un codec. (#17)
-- **L'application a sa propre icône.** Elle portait celle d'Electron par
-  défaut, `mac.icon` n'étant pas déclaré — et `assets/icon.png` ne contenait
-  pas le logo WatchMe mais une icône générique sans rapport. Nouvelle icône
-  dessinée en SVG à partir de l'œil du logo, dans la palette de l'interface.
-  `assets/icon.svg` est la source, `npm run icon:build` en produit le PNG.
-  (#31)
+- **The notification sound finally exists.** `renderer.js` referenced a
+  `notification-sound.mp3` that was not in the repository: the feature the
+  README advertised had never made a sound. Replaced with a short
+  Super Nintendo-style completion fanfare, generated by
+  `tools/build-notification-sound.mjs` (`npm run sound:build`) and shipped as
+  WAV — played natively by Chromium, with no codec dependency. (#17)
+- **The application has its own icon.** It carried Electron's default one,
+  `mac.icon` not being declared — and `assets/icon.png` held an unrelated
+  generic icon rather than the WatchMe logo. New icon drawn in SVG from the
+  eye in the logo, in the interface's palette. `assets/icon.svg` is the
+  source, `npm run icon:build` produces the PNG. (#31)
 
-### Modifié
+### Changed
 
-- `verify:pack` couvre désormais l'icône de l'application et la présence du
-  son dans l'asar, en plus de l'icône du tray.
+- `verify:pack` now covers the application icon and the presence of the sound
+  in the asar, on top of the tray icon.
 
 ## [0.10.0] - 2026-08-21
 
-Ce lot est une reprise de maintenance après onze mois sans commit. Il a été
-mené sous une contrainte explicite : **ne modifier aucune fonctionnalité
-existante**. Deux exceptions assumées, toutes deux des corrections de bugs
-détaillées plus bas — l'icône du tray et le fonctionnement hors-ligne.
+This batch is a maintenance pass after eleven months without a commit. It was
+carried out under an explicit constraint: **change no existing behaviour**.
+Two deliberate exceptions, both bug fixes detailed below — the tray icon and
+offline operation.
 
-### Sécurité
+### Security
 
-- Correction d'une injection DOM : le nom d'un processus, contrôlable par
-  n'importe quel processus local, était interpolé dans `innerHTML` lors des
-  notifications de repli. Remplacé par une construction DOM. (#6)
-- Suppression de `@electron/remote`, activé sur la fenêtre mais utilisé nulle
-  part. Le module perçait l'isolation de contexte sans contrepartie. (#5)
-- Suppression de la dépendance au CDN cdnjs et ajout d'une
+- Fixed a DOM injection: a process name, controllable by any local process,
+  was interpolated into `innerHTML` in the fallback notifications. Replaced
+  with DOM construction. (#6)
+- Removed `@electron/remote`, enabled on the window but used nowhere. The
+  module punched through context isolation for nothing in return. (#5)
+- Removed the dependency on the cdnjs CDN and added a
   `Content-Security-Policy`. (#7)
 
-### Corrigé
+### Fixed
 
-- **L'icône du tray était invisible dans l'application packagée.** La clé
-  `extraResources` sortait `misc/` de l'`app.asar`, alors que `main.js` l'y
-  cherche via `__dirname` ; `nativeImage` renvoyait une image 0×0. Le bug
-  n'apparaissait pas en développement, où `__dirname` est la racine du dépôt.
-  Le dock étant masqué, le tray est le seul point d'entrée de l'app. (#12)
-- **L'application était cassée hors-ligne** : les icônes venaient d'un CDN.
-  Elles sont désormais des SVG inline. (#7)
-- Double publication de release : sur un push de tag, `electron-builder`
-  basculait seul sur la politique `onTag` et publiait les artefacts, en
-  doublon du job `release`. Corrigé par `--publish never` sur le build. (#9)
+- **The tray icon was invisible in the packaged application.** The
+  `extraResources` key moved `misc/` out of the `app.asar`, while `main.js`
+  looks for it inside via `__dirname`; `nativeImage` returned a 0×0 image.
+  The bug did not show up in development, where `__dirname` is the repo root.
+  With the dock hidden, the tray is the app's only entry point. (#12)
+- **The application was broken offline**: the icons came from a CDN. They are
+  now inline SVGs. (#7)
+- Double release publication: on a tag push, `electron-builder` switched to
+  the `onTag` policy on its own and published the artefacts, duplicating the
+  `release` job. Fixed with `--publish never` on the build. (#9)
 
-### Ajouté
+### Added
 
-- Filet de tests de non-régression, là où le job CI s'appelait « Test and
-  Lint » sans qu'aucun test n'existe : contrat de `ps-list`, harness Electron
-  rejouant les APIs de `main.js`, démarrage de l'application réelle, et
-  vérification de l'artefact packagé. (#4, #12)
-- Dependabot, hebdomadaire sur npm et mensuel sur les GitHub Actions. Les
-  majeures de `ps-list` et `electron-store` en sont exclues : elles touchent
-  respectivement l'affichage des processus et la persistance des préférences,
-  et méritent une évaluation manuelle. (#13)
-- Ce fichier.
+- A non-regression test net, where the CI job was called "Test and Lint"
+  without a single test existing: the `ps-list` contract, an Electron harness
+  replaying the APIs `main.js` uses, a boot of the real application, and a
+  check of the packaged artefact. (#4, #12)
+- Dependabot, weekly on npm and monthly on GitHub Actions. Majors of
+  `ps-list` and `electron-store` are excluded: they touch process display and
+  preference persistence respectively, and deserve a manual review. (#13)
+- This file.
 
-### Modifié
+### Changed
 
-- Migration d'ESLint + Prettier vers Biome 2.5.9, finalisant la branche
-  `feature/maj` restée en plan. (#8)
-- Nettoyage du workflow de release : étapes Linux jamais exécutées, globs
-  d'artefacts sans objet, `secrets.GH_TOKEN` remplacé par le `GITHUB_TOKEN`
-  intégré, filtre de PR corrigé. (#9)
-- L'application livrée n'embarque plus les fichiers de développement
-  (`test/`, `.psd`, configuration), ni le gif de démonstration de 1,4 Mo qui
-  ne sert qu'au README. (#12)
-- Métadonnées `package.json` : `version` alignée sur le dernier tag, licence
-  déclarée sous une forme SPDX valide. (#11)
+- Migrated from ESLint + Prettier to Biome 2.5.9, finishing the abandoned
+  `feature/maj` branch. (#8)
+- Cleaned up the release workflow: Linux steps that never ran, artefact globs
+  with no purpose, `secrets.GH_TOKEN` replaced by the built-in
+  `GITHUB_TOKEN`, PR filter fixed. (#9)
+- The shipped application no longer embeds development files (`test/`,
+  `.psd`, configuration), nor the 1.4 MB demo GIF that only serves the
+  README. (#12)
+- `package.json` metadata: `version` aligned with the latest tag, licence
+  declared in a valid SPDX form. (#11)
 
-### Supprimé
+### Removed
 
-- Contrôles de fenêtre morts (HTML commenté, CSS, listeners, API preload et
-  handler IPC), IPC fantôme `update-monitored-processes`, et double demande
-  de permission de notification. (#10)
+- Dead window controls (commented-out HTML, CSS, listeners, preload API and
+  IPC handler), the phantom `update-monitored-processes` IPC, and a duplicate
+  notification permission request. (#10)
 
-### Connu, non traité
+### Known, not addressed
 
-- Le tray et le titre de fenêtre affichent encore « Script Watcher ». (#18)
-- `ps-list` reste en 8.x : la majeure ne corrige aucune vulnérabilité et
-  toucherait l'affichage des processus. (#16)
+- The tray and the window title still show "Script Watcher". (#18)
+- `ps-list` stays on 8.x: the major fixes no vulnerability and would touch
+  process display. (#16)
