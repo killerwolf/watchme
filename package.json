@@ -1,7 +1,7 @@
 {
   "name": "watchme",
   "version": "0.11.1",
-  "description": "A powerful and user-friendly process monitoring tool for macOS, Windows, and Linux",
+  "description": "macOS menu bar app that watches running processes and notifies you the moment one exits.",
   "main": "main.js",
   "type": "module",
   "homepage": "https://github.com/killerwolf/watchme",
@@ -48,6 +48,7 @@
     "process-watcher",
     "system-monitor",
     "macos",
+    "menubar",
     "tray",
     "notifications",
     "desktop-app"
