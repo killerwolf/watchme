@@ -41,7 +41,7 @@ Activity Monitor and `htop` are built for the rest.
 
 **No, if** you're on Windows or Linux. The build config carries targets for both, but
 the release workflow only produces macOS binaries today. See
-[Platforms](CONTRIBUTING.md#plateformes).
+[Platforms](CONTRIBUTING.md#platforms).
 
 ## Features
 

@@ -1,65 +1,68 @@
-// Contrat de `ps-list`.
+// The `ps-list` contract.
 //
-// `renderer.js` consomme exactement trois champs du retour de psList() :
-//   - proc.pid  : cle de la Map de surveillance, et valeur des checkbox
-//   - proc.name : colonne Name, filtre texte, prefilter regex
-//   - proc.cmd  : colonne Command, filtre texte, prefilter regex
+// `renderer.js` consumes exactly three fields from what psList() returns:
+//   - proc.pid  : key of the monitoring Map, and the checkbox value
+//   - proc.name : Name column, text filter, prefilter regex
+//   - proc.cmd  : Command column, text filter, prefilter regex
 //
-// Ces tests verrouillent ce contrat. Ils sont la pour echouer bruyamment
-// le jour ou l'on tentera la montee ps-list 8 -> 9 (cf. issue #16).
+// These tests lock that contract down. They are here to fail loudly the day
+// somebody attempts the ps-list 8 -> 9 upgrade (see issue #16).
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import psList from 'ps-list';
 
-test('psList() retourne une liste non vide de processus', async () => {
+test('psList() returns a non-empty list of processes', async () => {
   const processes = await psList();
-  assert.ok(Array.isArray(processes), 'le retour doit etre un tableau');
+  assert.ok(Array.isArray(processes), 'the return value must be an array');
   assert.ok(
     processes.length > 0,
-    'la machine execute forcement au moins un processus'
+    'the machine is necessarily running at least one process'
   );
 });
 
-test('chaque processus expose pid, name et cmd avec les bons types', async () => {
+test('every process exposes pid, name and cmd with the right types', async () => {
   const processes = await psList();
 
   for (const proc of processes) {
     assert.equal(
       typeof proc.pid,
       'number',
-      `pid doit etre un number, recu ${typeof proc.pid}`
+      `pid must be a number, got ${typeof proc.pid}`
     );
-    assert.ok(Number.isInteger(proc.pid) && proc.pid > 0, 'pid entier positif');
+    assert.ok(
+      Number.isInteger(proc.pid) && proc.pid > 0,
+      'positive integer pid'
+    );
 
-    // renderer.js appelle proc.name.toLowerCase() sans garde
-    assert.equal(typeof proc.name, 'string', 'name doit etre un string');
-    assert.ok(proc.name.length > 0, 'name ne doit pas etre vide');
+    // renderer.js calls proc.name.toLowerCase() with no guard
+    assert.equal(typeof proc.name, 'string', 'name must be a string');
+    assert.ok(proc.name.length > 0, 'name must not be empty');
 
-    // renderer.js appelle proc.cmd.toLowerCase() sans garde : un cmd
-    // absent ou non-string ferait planter le filtrage.
-    assert.equal(typeof proc.cmd, 'string', 'cmd doit etre un string');
+    // renderer.js calls proc.cmd.toLowerCase() with no guard: a missing or
+    // non-string cmd would crash the filtering.
+    assert.equal(typeof proc.cmd, 'string', 'cmd must be a string');
   }
 });
 
-test('le processus node courant est present et retrouvable', async () => {
+test('the current node process is present and findable', async () => {
   const processes = await psList();
   const self = processes.find((proc) => proc.pid === process.pid);
 
-  assert.ok(self, 'le processus de test doit apparaitre dans la liste');
+  assert.ok(self, 'the test process must appear in the list');
   assert.match(
     self.name.toLowerCase(),
     /node/,
-    `name attendu contenant "node", recu "${self.name}"`
+    `expected name to contain "node", got "${self.name}"`
   );
 });
 
-test('les PID sont uniques', async () => {
+test('PIDs are unique', async () => {
   const processes = await psList();
   const pids = processes.map((proc) => proc.pid);
   assert.equal(
     new Set(pids).size,
     pids.length,
-    'la Map de surveillance est indexee par PID : les doublons casseraient le suivi'
+    'the monitoring Map is keyed by PID: duplicates would break tracking'
   );
 });

@@ -1,18 +1,18 @@
-# Contribuer à WatchMe
+# Contributing to WatchMe
 
-Merci de l'intérêt porté au projet. Ce document décrit l'environnement de
-développement, les vérifications à passer, et la procédure de release.
+Thanks for the interest. This document covers the development environment,
+the checks to pass, and the release procedure.
 
-## Environnement
+## Environment
 
-### Prérequis
+### Requirements
 
-- **Node.js ≥ 22.12.0** — le dépôt épingle `lts/jod` dans `.nvmrc`
+- **Node.js ≥ 22.12.0** — the repo pins `lts/jod` in `.nvmrc`
 - **npm ≥ 10**
-- **macOS** pour un build complet : WatchMe ne publie aujourd'hui que des
-  binaires macOS (voir *Plateformes* ci-dessous)
+- **macOS** for a full build: WatchMe only publishes macOS binaries today
+  (see *Platforms* below)
 
-### Installation
+### Setup
 
 ```bash
 git clone https://github.com/killerwolf/watchme.git
@@ -21,95 +21,109 @@ npm install
 npm start
 ```
 
-`npm run dev` lance la même application avec le drapeau `--dev`.
+`npm run dev` runs the same application with the `--dev` flag.
 
-## Structure
+## Layout
 
 ```
 watchme/
-├── main.js              # Processus principal Electron : fenêtre, tray, IPC
-├── preload.js           # Pont contextIsolation, canaux depuis ipc-channels.json
-├── renderer.js          # Interface : liste des processus, filtres, notifications
-├── index.html           # Fenêtre unique, CSP stricte, aucune ressource distante
-├── monitoring.js        # Ensemble surveillé + boucle de sondage (sans DOM)
-├── tray-status.js       # Badge et infobulle du tray (sans Electron)
-├── ipc-channels.json    # Noms de canaux partagés entre main et preload
-├── assets/              # Icônes applicatives et ressources de build
-├── misc/                # Logo, gif de démo, son de notification, icône du tray
-├── tools/               # Scripts de génération de ressources
-├── test/                # Tests unitaires + harnais Electron
-├── docs/agents/         # Conventions destinées aux agents
-└── .github/workflows/   # CI et release
+├── main.js              # Electron main process: window, tray, IPC
+├── preload.js           # contextIsolation bridge, channels from ipc-channels.json
+├── renderer.js          # UI: process list, filters, notifications
+├── index.html           # Single window, strict CSP, no remote resources
+├── monitoring.js        # Watched set + polling loop (DOM-free)
+├── tray-status.js       # Tray badge and tooltip (Electron-free)
+├── ipc-channels.json    # Channel names shared between main and preload
+├── assets/              # App icons and build resources
+├── misc/                # Logo, demo GIF, notification sound, tray icon
+├── site/                # Landing page published to h4md1.fr/watchme/
+├── tools/               # Asset generation scripts
+├── test/                # Unit tests + Electron harness
+├── docs/agents/         # Conventions aimed at agents
+└── .github/workflows/   # CI, release and Pages
 ```
 
-`monitoring.js` et `tray-status.js` sont volontairement dépourvus de toute
-dépendance à Electron et au DOM : c'est ce qui permet de les exercer sous
-`node --test` sans démarrer l'application.
+`monitoring.js` and `tray-status.js` deliberately carry no dependency on
+Electron or the DOM. That is what lets them be exercised under `node --test`
+without starting the application.
 
 ## Scripts
 
-| Script | Rôle |
+| Script | Purpose |
 | --- | --- |
-| `npm start` | Lance l'application |
-| `npm test` | Tests unitaires puis tests Electron |
-| `npm run test:unit` | Tests unitaires seuls (`node --test`) |
-| `npm run test:electron` | Tests nécessitant un runtime Electron |
+| `npm start` | Run the application |
+| `npm test` | Unit tests, then the Electron tests |
+| `npm run test:unit` | Unit tests alone (`node --test`) |
+| `npm run test:electron` | Tests that need an Electron runtime |
 | `npm run check` | Lint + format (Biome) |
-| `npm run check:fix` | Corrige ce qui est corrigible automatiquement |
-| `npm run pack` | Build sans installeur, pour vérification |
-| `npm run verify:pack` | Vérifie l'application packagée |
-| `npm run build:mac` | Produit les `.dmg` et `.zip` |
+| `npm run check:fix` | Fix whatever is automatically fixable |
+| `npm run pack` | Build without an installer, for verification |
+| `npm run verify:pack` | Check the packaged application |
+| `npm run build:mac` | Produce the `.dmg` and `.zip` |
 
-La CI exécute `lint`, `format:check`, `test`, `pack` et `verify:pack`. Lancer
-`npm run check && npm test && npm run pack` en local couvre l'essentiel.
+CI runs `lint`, `format:check`, `test`, `pack` and `verify:pack`. Running
+`npm run check && npm test && npm run pack` locally covers the essentials.
 
-## Proposer un changement
+## Proposing a change
 
-1. Partir de `main`.
-2. Écrire le changement, avec un test dès que le comportement est testable.
-   Un comportement extractible hors d'Electron mérite son module testable.
-3. Passer les vérifications ci-dessus.
-4. Ajouter une entrée sous `## [Non publié]` dans `CHANGELOG.md` si le
-   changement est visible par l'utilisateur. Décrire ce qui change **pour
-   lui**, pas quels fichiers ont bougé.
-5. Ouvrir une pull request en expliquant le pourquoi autant que le quoi.
+1. Branch from `main`.
+2. Write the change, with a test as soon as the behaviour is testable.
+   Behaviour that can be extracted out of Electron deserves its own testable
+   module.
+3. Pass the checks above.
+4. Add an entry under `## [Unreleased]` in `CHANGELOG.md` if the change is
+   user-visible. Describe what changes **for them**, not which files moved.
+5. Open a pull request explaining the why as much as the what.
 
-Les issues vivent dans [GitHub Issues](https://github.com/killerwolf/watchme/issues)
-et suivent les libellés `needs-triage`, `needs-info`, `ready-for-agent`,
+Everything in this repository is written in English — comments, tests,
+changelog entries and commit messages included.
+
+Issues live in [GitHub Issues](https://github.com/killerwolf/watchme/issues)
+and use the labels `needs-triage`, `needs-info`, `ready-for-agent`,
 `ready-for-human`, `wontfix`.
 
-## Plateformes
+## Platforms
 
-`electron-builder` porte des cibles Windows (`nsis`, `portable`) et Linux
-(`AppImage`, `deb`), mais le workflow de release ne construit que macOS. Ces
-cibles ne sont donc **ni construites ni testées** en l'état. Une contribution
-qui les active doit aussi les faire tourner en CI — le positionnement de la
-fenêtre et le badge du tray comportent des branches spécifiques par plateforme
-qui n'ont jamais été exécutées ailleurs que sur macOS.
+`electron-builder` carries Windows (`nsis`, `portable`) and Linux
+(`AppImage`, `deb`) targets, but the release workflow only builds macOS.
+Those targets are therefore **neither built nor tested** as things stand. A
+contribution that turns them on has to run them in CI too — window
+positioning and the tray badge both have platform-specific branches that have
+never run anywhere but macOS.
 
-## Publier une release
+## The landing page
 
-1. Déplacer les entrées de `## [Non publié]` sous une nouvelle section
-   `## [X.Y.Z] - AAAA-MM-JJ`.
-2. Aligner `version` dans `package.json` sur `X.Y.Z`.
-3. Commiter, fusionner sur `main`.
-4. Poser et pousser le tag :
+`site/` is published to <https://h4md1.fr/watchme/> by
+`.github/workflows/pages.yml`, on any push to `main` that touches `site/`.
+It is plain HTML with no build step: edit and push.
+
+The download buttons resolve the newest release's DMGs through the GitHub API
+at page load, falling back to the releases page when that call fails. There
+is no version number to update by hand.
+
+## Cutting a release
+
+1. Move the entries under `## [Unreleased]` into a new
+   `## [X.Y.Z] - YYYY-MM-DD` section.
+2. Align `version` in `package.json` with `X.Y.Z`.
+3. Commit, merge to `main`.
+4. Tag and push:
 
    ```bash
    git tag vX.Y.Z && git push origin vX.Y.Z
    ```
 
-5. Le workflow crée la release, en tire le corps depuis la section de
-   `CHANGELOG.md` correspondante, construit macOS et y dépose les artefacts.
+5. The workflow creates the release, pulls its body from the matching
+   `CHANGELOG.md` section, builds macOS and uploads the artefacts to it.
 
-Un tag de préversion (`vX.Y.Z-rc.1`) publie en *pre-release* : `electron-updater`
-les ignore par défaut, la préversion n'atteint donc pas les installations
-existantes.
+A prerelease tag (`vX.Y.Z-rc.1`) publishes as a *pre-release*:
+`electron-updater` ignores those by default, so the prerelease never reaches
+existing installs.
 
-La release est créée **avant** le build, délibérément : electron-builder lance
-un publieur par architecture en parallèle, et sans release préexistante le
-second reçoit un `422 already_exists` qui fait échouer ses mises en ligne.
+The release is created **before** the build, deliberately: electron-builder
+starts one publisher per architecture in parallel, and with no pre-existing
+release the second gets a `422 already_exists` that fails its uploads.
 
-## Code de conduite
+## Code of conduct
 
-Le projet suit le [Contributor Covenant](CODE_OF_CONDUCT.md).
+The project follows the [Contributor Covenant](CODE_OF_CONDUCT.md).

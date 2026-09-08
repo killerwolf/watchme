@@ -10,21 +10,20 @@ updates:
     labels:
       - deps
     groups:
-      # Les mises a jour mineures et correctives sont regroupees en une
-      # seule PR : c'est le bruit hebdomadaire qui fait qu'on finit par
-      # ne plus lire Dependabot du tout.
+      # Minor and patch updates are grouped into a single PR: that weekly
+      # noise is what eventually stops anyone reading Dependabot at all.
       minor-and-patch:
         update-types:
           - minor
           - patch
     ignore:
-      # ps-list expose directement pid/name/cmd au renderer : une majeure
-      # doit etre evaluee a la main, pas mergee au fil de l'eau (cf. #16).
+      # ps-list exposes pid/name/cmd straight to the renderer: a major has
+      # to be reviewed by hand, not merged as it lands (see #16).
       - dependency-name: ps-list
         update-types:
           - version-update:semver-major
-      # electron-store porte la persistance des preferences : une majeure
-      # peut faire perdre leurs reglages aux utilisateurs (cf. #15).
+      # electron-store carries preference persistence: a major can lose
+      # users their settings (see #15).
       - dependency-name: electron-store
         update-types:
           - version-update:semver-major

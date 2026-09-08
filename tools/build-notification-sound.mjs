@@ -1,17 +1,17 @@
-// Genere misc/notification-sound.wav.
+// Generates misc/notification-sound.wav.
 //
-// Le fichier audio est un artefact : ce script en est la source. On evite
-// ainsi un binaire orpheline dont personne ne sait d'ou il vient — meme
-// logique que assets/icon.svg pour l'icone.
+// The audio file is an artefact: this script is its source. That avoids an
+// orphaned binary nobody can trace - same reasoning as assets/icon.svg for
+// the icon.
 //
 //   npm run sound:build
 //
-// Cahier des charges : une petite fanfare de fin facon Super Nintendo.
-// Ondes pulsees (le timbre "chiptune"), arpege ascendant qui se termine
-// sur l'octave, deux voix — la SNES etait polyphonique, contrairement a la
-// NES — et une reverb courte, sa signature sonore.
+// The brief: a small Super Nintendo-style completion fanfare. Pulse waves
+// (the "chiptune" timbre), a rising arpeggio landing on the octave, two
+// voices - the SNES was polyphonic, unlike the NES - and a short reverb,
+// its sonic signature.
 //
-// Frequence d'echantillonnage : 32000 Hz, celle du DSP de la console.
+// Sample rate: 32000 Hz, the console DSP's own.
 
 import { writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -21,33 +21,33 @@ const SAMPLE_RATE = 32000;
 const CHANNELS = 2;
 const BITS = 16;
 
-// Do majeur : l'arpege monte puis se pose sur l'octave.
+// C major: the arpeggio climbs, then settles on the octave.
 const LEAD = [
-  { hz: 523.25, start: 0.0, dur: 0.075 }, // do5
-  { hz: 659.25, start: 0.07, dur: 0.075 }, // mi5
-  { hz: 783.99, start: 0.14, dur: 0.075 }, // sol5
-  { hz: 1046.5, start: 0.21, dur: 0.42 }, // do6, tenue finale
+  { hz: 523.25, start: 0.0, dur: 0.075 }, // C5
+  { hz: 659.25, start: 0.07, dur: 0.075 }, // E5
+  { hz: 783.99, start: 0.14, dur: 0.075 }, // G5
+  { hz: 1046.5, start: 0.21, dur: 0.42 }, // C6, final sustain
 ];
 
-// Voix d'accompagnement, une sixte plus bas, en retrait.
+// Backing voice, a sixth lower, sitting behind the lead.
 const HARMONY = [
-  { hz: 329.63, start: 0.0, dur: 0.075 }, // mi4
-  { hz: 392.0, start: 0.07, dur: 0.075 }, // sol4
-  { hz: 523.25, start: 0.14, dur: 0.075 }, // do5
-  { hz: 659.25, start: 0.21, dur: 0.42 }, // mi5
+  { hz: 329.63, start: 0.0, dur: 0.075 }, // E4
+  { hz: 392.0, start: 0.07, dur: 0.075 }, // G4
+  { hz: 523.25, start: 0.14, dur: 0.075 }, // C5
+  { hz: 659.25, start: 0.21, dur: 0.42 }, // E5
 ];
 
 const DURATION = 0.78;
 const TOTAL = Math.floor(SAMPLE_RATE * DURATION);
 
-/** Onde pulsee : le timbre carre des consoles 8/16 bits. */
+/** Pulse wave: the square timbre of 8/16-bit consoles. */
 function pulse(phase, duty) {
   return phase % 1 < duty ? 1 : -1;
 }
 
 /**
- * Enveloppe percussive : attaque tres courte pour eviter le clic,
- * puis decroissance exponentielle.
+ * Percussive envelope: a very short attack to avoid the click, then an
+ * exponential decay.
  */
 function envelope(t, dur) {
   if (t < 0 || t > dur) return 0;
@@ -67,7 +67,7 @@ function renderVoice(notes, { duty, gain, vibrato }) {
     let phase = 0;
     for (let i = from; i < to; i++) {
       const t = (i - from) / SAMPLE_RATE;
-      // Le vibrato ne s'installe que sur la note tenue, comme un musicien.
+      // Vibrato only settles in on the sustained note, the way a player does.
       const depth = vibrato * Math.min(1, t / 0.18);
       const hz = note.hz * (1 + depth * Math.sin(2 * Math.PI * 5.5 * t));
       phase += hz / SAMPLE_RATE;
@@ -77,7 +77,7 @@ function renderVoice(notes, { duty, gain, vibrato }) {
   return out;
 }
 
-/** Reverb rudimentaire : quelques echos decroissants. */
+/** Rudimentary reverb: a handful of decaying echoes. */
 function reverb(input, { delayMs, feedback, taps }) {
   const out = Float64Array.from(input);
   const delay = Math.floor((delayMs / 1000) * SAMPLE_RATE);
@@ -94,8 +94,8 @@ function reverb(input, { delayMs, feedback, taps }) {
 const lead = renderVoice(LEAD, { duty: 0.25, gain: 0.5, vibrato: 0.006 });
 const harmony = renderVoice(HARMONY, { duty: 0.5, gain: 0.22, vibrato: 0 });
 
-// Leger etalement stereo : la SNES etait stereo, on place les deux voix
-// de part et d'autre du centre plutot que de les empiler.
+// Slight stereo spread: the SNES was stereo, so the two voices sit either
+// side of centre rather than stacked on top of each other.
 const left = reverb(
   lead.map((v, i) => v * 0.85 + harmony[i]),
   { delayMs: 92, feedback: 0.26, taps: 3 }
@@ -105,14 +105,14 @@ const right = reverb(
   { delayMs: 108, feedback: 0.26, taps: 3 }
 );
 
-// Normalisation a -1 dBFS, avec une saturation douce en garde-fou.
+// Normalised to -1 dBFS, with soft saturation as a guard.
 let peak = 0;
 for (let i = 0; i < TOTAL; i++) {
   peak = Math.max(peak, Math.abs(left[i]), Math.abs(right[i]));
 }
 const normalize = 0.891 / (peak || 1);
 
-// Fondu de sortie, pour ne pas couper net sur la queue de reverb.
+// Fade-out, so the reverb tail is not cut off abruptly.
 const fadeFrom = Math.floor(TOTAL * 0.82);
 
 const pcm = Buffer.alloc(TOTAL * CHANNELS * (BITS / 8));
@@ -150,4 +150,4 @@ const target = path.join(
 writeFileSync(target, Buffer.concat([header, pcm]));
 
 const kb = Math.round((header.length + pcm.length) / 102.4) / 10;
-console.log(`${path.relative(process.cwd(), target)} — ${DURATION}s, ${kb} Ko`);
+console.log(`${path.relative(process.cwd(), target)} - ${DURATION}s, ${kb} kB`);
