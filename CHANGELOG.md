@@ -22,6 +22,17 @@ et le projet respecte le [versionnage sémantique](https://semver.org/lang/fr/).
 ### Ajouté
 
 - `CONTRIBUTING.md` et `CODE_OF_CONDUCT.md`.
+- Une carte de prévisualisation sociale (`.github/assets/social-preview.png`).
+  Jusqu'ici, tout lien vers le dépôt collé dans Slack ou ailleurs s'affichait
+  en texte gris.
+
+### Supprimé
+
+- La documentation ne part plus dans l'application packagée. `README.md`,
+  `CHANGELOG.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `CLAUDE.md`,
+  `docs/` et `.npmcheckrc` étaient embarqués dans l'`asar` : ils ne servent
+  à rien à l'exécution. Même raisonnement que pour le gif de démonstration
+  en 0.11.0. (#12)
 
 ### Corrigé
 

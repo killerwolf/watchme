@@ -84,7 +84,14 @@
       "!.npmrc",
       "!misc/WatchMe-demo.gif",
       "!misc/WatchMe-logo.png",
-      "!tools"
+      "!tools",
+      "!docs",
+      "!CLAUDE.md",
+      "!CONTRIBUTING.md",
+      "!CODE_OF_CONDUCT.md",
+      "!CHANGELOG.md",
+      "!README.md",
+      "!.npmcheckrc"
     ],
     "mac": {
       "target": [
