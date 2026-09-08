@@ -18,11 +18,11 @@ test('the badge caps at 99+ so it cannot stretch the menu bar', () => {
 });
 
 test('the tooltip pluralises the process count', () => {
-  assert.equal(trayTooltip(0), 'Script Watcher - Monitoring 0 processes');
-  assert.equal(trayTooltip(1), 'Script Watcher - Monitoring 1 process');
-  assert.equal(trayTooltip(2), 'Script Watcher - Monitoring 2 processes');
+  assert.equal(trayTooltip(0), 'WatchMe - Monitoring 0 processes');
+  assert.equal(trayTooltip(1), 'WatchMe - Monitoring 1 process');
+  assert.equal(trayTooltip(2), 'WatchMe - Monitoring 2 processes');
 });
 
 test('the tooltip reports the real count even past the badge cap', () => {
-  assert.equal(trayTooltip(150), 'Script Watcher - Monitoring 150 processes');
+  assert.equal(trayTooltip(150), 'WatchMe - Monitoring 150 processes');
 });

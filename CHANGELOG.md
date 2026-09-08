@@ -5,6 +5,15 @@ Toutes les évolutions notables de WatchMe sont consignées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/),
 et le projet respecte le [versionnage sémantique](https://semver.org/lang/fr/).
 
+## [Non publié]
+
+### Corrigé
+
+- **Le nom du produit dans l'interface.** Le titre de fenêtre et l'infobulle
+  du tray annonçaient encore « Script Watcher », le nom d'avant. Deux
+  surfaces vues à chaque lancement, portant un nom qui n'existe nulle part
+  ailleurs. (#18)
+
 ## [0.11.1] - 2026-08-21
 
 Version de tuyauterie : **le binaire est fonctionnellement identique à la
