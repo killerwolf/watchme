@@ -107,9 +107,11 @@ check(
       autoLaunch: false,
       prefilterRegex: '',
     }));
-    ipcMain.handle(IPC_CHANNELS.SAVE_PREFERENCES, () => ({
-      loginItemSuccess: true,
-    }));
+    let savedPreferences = null;
+    ipcMain.handle(IPC_CHANNELS.SAVE_PREFERENCES, (_event, payload) => {
+      savedPreferences = payload;
+      return { loginItemSuccess: true };
+    });
 
     const win = new BrowserWindow({
       width: 800,
@@ -227,6 +229,48 @@ check(
       `the notification sound does not load (code ${sound.code})`
     );
     assert.ok(sound.duration > 0.5, 'unexpected sound duration');
+
+    // The notification settings are wired end to end: the Preferences tab
+    // renders them, and Save carries them across the bridge. A checkbox that
+    // exists but is never sent would silently do nothing.
+    const controls = await win.webContents.executeJavaScript(`
+      (() => {
+        document.querySelector('.sidebar-item[data-tab="preferences"]').click();
+        const desktop = document.getElementById('desktopNotifications');
+        const sound = document.getElementById('notificationSound');
+        return { hasDesktop: !!desktop, hasSound: !!sound };
+      })()
+    `);
+    assert.equal(
+      controls.hasDesktop,
+      true,
+      'the desktop notification setting is missing from the Preferences tab'
+    );
+    assert.equal(controls.hasSound, true, 'the sound setting is missing');
+
+    await win.webContents.executeJavaScript(`
+      new Promise((resolve) => {
+        // loadPreferences() fills the form asynchronously; let it land before
+        // changing anything, or Save would send back the defaults.
+        setTimeout(() => {
+          document.getElementById('desktopNotifications').checked = false;
+          document.getElementById('notificationSound').checked = false;
+          document.getElementById('savePreferences').click();
+          setTimeout(resolve, 250);
+        }, 250);
+      })
+    `);
+
+    assert.equal(
+      savedPreferences?.desktopNotifications,
+      false,
+      'unticking the desktop notification setting was not sent to the store'
+    );
+    assert.equal(
+      savedPreferences?.notificationSound,
+      false,
+      'unticking the sound setting was not sent to the store'
+    );
 
     win.destroy();
     ipcMain.removeHandler(IPC_CHANNELS.GET_PROCESSES);

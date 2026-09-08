@@ -7,6 +7,14 @@ and the project adheres to [semantic versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Notifications and sound can each be turned off**, from the Preferences
+  tab. Both default to on, including for anyone upgrading: `preferences.js`
+  completes whatever is on disk with the defaults, so a key the user has
+  never saved reads as "on" rather than as `undefined`. That direction is
+  the one thing here worth a test, and it has four.
+
 ### Changed
 
 - **The README now says what the app does, and who it is for.** An "Is this
