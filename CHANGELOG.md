@@ -29,6 +29,11 @@ and the project adheres to [semantic versioning](https://semver.org/).
 - A social preview card (`.github/assets/social-preview.png`). Until now,
   every link to the repository pasted into Slack or anywhere else rendered as
   grey text.
+- **A landing page at <https://h4md1.fr/watchme/>**, published from `site/` by
+  `.github/workflows/pages.yml`. Its download buttons resolve the newest
+  release's DMGs through the GitHub API, so there is no version number to
+  update by hand, and it carries its own Open Graph metadata — the repository
+  social preview does not cover a link to the site.
 
 ### Removed
 
