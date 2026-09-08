@@ -13,6 +13,7 @@ import {
 import Store from 'electron-store';
 import psList from 'ps-list';
 import IPC_CHANNELS from './ipc-channels.json' with { type: 'json' };
+import { withDefaults } from './preferences.js';
 import { trayBadge, trayTooltip } from './tray-status.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -25,11 +26,10 @@ app.isQuitting = false; // Initialize isQuitting
 // Initialize electron-store for preference persistence
 const store = new Store();
 
-// Load preferences from store or set default values
-let preferences = store.get('preferences', {
-  autoLaunch: false,
-  prefilterRegex: '', // Default preferences
-});
+// Completed with the defaults on every read: a user who last saved before a
+// setting existed has no key for it, and preferences.js is where that rule
+// lives.
+let preferences = withDefaults(store.get('preferences', {}));
 
 function createWindow() {
   mainWindow = new BrowserWindow({

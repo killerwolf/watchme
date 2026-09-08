@@ -1,6 +1,7 @@
 // renderer.js
 
 import { createProcessMonitor } from './monitoring.js';
+import { DEFAULT_PREFERENCES } from './preferences.js';
 
 const processMonitor = createProcessMonitor({
   getProcesses: () => window.electronAPI.getProcesses(),
@@ -22,6 +23,21 @@ processMonitor.onEnded((pid, processName) => {
 });
 
 processMonitor.onChange(() => updateMonitoringStatus());
+
+// The notification settings have to be readable the instant a watched
+// process ends, and the store lives in the main process. This cache is kept
+// in step by refreshPreferences() at startup, when the Preferences tab is
+// opened, and after every save.
+//
+// Seeded from the shared defaults, so a key the user has never saved reads
+// as "on" here too rather than as undefined.
+let cachedPreferences = { ...DEFAULT_PREFERENCES };
+
+async function refreshPreferences() {
+  const stored = await window.electronAPI.getPreferences();
+  cachedPreferences = { ...cachedPreferences, ...stored };
+  return cachedPreferences;
+}
 
 // Simple logging utility - disabled in production
 const logger = {
@@ -118,6 +134,8 @@ function showFallbackNotification(message, type) {
 window.showFallbackNotification = showFallbackNotification;
 
 function initialize() {
+  refreshPreferences();
+
   // Initialize notifications
   if (
     Notification.permission !== 'granted' &&
@@ -194,22 +212,38 @@ function activateTab(tabName) {
 }
 
 function loadPreferences() {
-  window.electronAPI.getPreferences().then((preferences) => {
+  refreshPreferences().then((preferences) => {
     document.getElementById('autoLaunch').checked = preferences.autoLaunch;
     document.getElementById('prefilterRegex').value =
       preferences.prefilterRegex || '';
+    document.getElementById('desktopNotifications').checked =
+      preferences.desktopNotifications;
+    document.getElementById('notificationSound').checked =
+      preferences.notificationSound;
   });
 }
 
 async function savePreferences() {
   const autoLaunch = document.getElementById('autoLaunch').checked;
   const prefilterRegex = document.getElementById('prefilterRegex').value.trim();
+  const desktopNotifications = document.getElementById(
+    'desktopNotifications'
+  ).checked;
+  const notificationSound =
+    document.getElementById('notificationSound').checked;
 
   try {
     const { loginItemSuccess } = await window.electronAPI.savePreferences({
       autoLaunch,
       prefilterRegex,
+      desktopNotifications,
+      notificationSound,
     });
+    cachedPreferences = {
+      ...cachedPreferences,
+      desktopNotifications,
+      notificationSound,
+    };
     showNotification(
       loginItemSuccess
         ? 'Preferences saved successfully!'
@@ -365,13 +399,16 @@ filterInput.addEventListener(
 function notifyProcessEnded(pid, processName) {
   logger.debug(`Process "${processName}" (PID ${pid}) has ended.`);
 
-  showDesktopNotification({
-    title: 'Process Ended',
-    message: `Process "${processName}" (PID ${pid}) has ended.`,
-  });
+  if (cachedPreferences.desktopNotifications) {
+    showDesktopNotification({
+      title: 'Process Ended',
+      message: `Process "${processName}" (PID ${pid}) has ended.`,
+    });
+  }
 
-  // Play a sound notification
-  playNotificationSound();
+  if (cachedPreferences.notificationSound) {
+    playNotificationSound();
+  }
 }
 
 function playNotificationSound() {
