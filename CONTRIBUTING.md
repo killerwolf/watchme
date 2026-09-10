@@ -64,14 +64,17 @@ CI runs `lint`, `format:check`, `test`, and `pack`. Running
 
 ## Proposing a change
 
-1. Branch from `main`.
+1. Branch from `develop` using a descriptive `feature/*` branch name.
 2. Write the change, with a test as soon as the behaviour is testable.
    Behaviour that can be extracted out of the desktop shell deserves its own testable
    module.
 3. Pass the checks above.
-4. Add an entry under `## [Unreleased]` in `CHANGELOG.md` if the change is
+4. Use a Conventional Commit message, for example
+   `feat(monitoring): add process group filters`.
+5. Add an entry under `## [Unreleased]` in `CHANGELOG.md` if the change is
    user-visible. Describe what changes **for them**, not which files moved.
-5. Open a pull request explaining the why as much as the what.
+6. Open a pull request targeting `develop`, explaining the why as much as the
+   what.
 
 Everything in this repository is written in English — comments, tests,
 changelog entries and commit messages included.
@@ -102,17 +105,26 @@ is no version number to update by hand.
 1. Move the entries under `## [Unreleased]` into a new
    `## [X.Y.Z] - YYYY-MM-DD` section.
 2. Align `version` in `package.json` with `X.Y.Z`.
-3. Commit, merge to `main`.
-4. Tag and push:
+3. Create `release/vX.Y.Z` from `develop`.
+4. Stabilize and test the release candidate. Tag each candidate:
+
+   ```bash
+   git tag vX.Y.Z-rc.1 && git push origin vX.Y.Z-rc.1
+   ```
+
+5. Merge the stabilized release branch into `main`, then tag and push the
+   production version:
 
    ```bash
    git tag vX.Y.Z && git push origin vX.Y.Z
    ```
 
-5. The workflow creates the release, pulls its body from the matching
-   `CHANGELOG.md` section, builds macOS and uploads the artefacts to it.
+6. The workflow creates the GitHub release, pulls its body from the matching
+   `CHANGELOG.md` section, builds macOS, and uploads the artifacts to it.
 
-A prerelease tag (`vX.Y.Z-rc.1`) publishes as a *pre-release*. Tauri's updater
+Development tags (`vX.Y.Z-dev.YYYYMMDD` and `vX.Y.Z-alpha.N`) and release
+candidate tags (`vX.Y.Z-rc.N`) publish as *pre-releases*. A clean
+`vX.Y.Z` tag on `main` publishes as the latest stable release. Tauri's updater
 signing and update metadata are not configured yet; releases currently carry
 the built installers as GitHub release assets.
 
