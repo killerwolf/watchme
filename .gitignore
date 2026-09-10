@@ -9,6 +9,7 @@ dist/
 dist-frontend/
 out/
 src-tauri/target/
+src-tauri/gen/
 
 # Environment variables
 .env
