@@ -1,0 +1,798 @@
+/*
+ * WatchMe — menu-bar popover styling.
+ *
+ * The window is undecorated, always-on-top and hides on blur, so this is a
+ * popover panel rather than a document window: dense rows, small type, and
+ * chrome kept to a single title bar. Follows the system appearance.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  --bg: #ffffff;
+  --bg-chrome: #f2f2f4;
+  --bg-raised: #ffffff;
+  --bg-sunken: #ececee;
+  --text: #1d1d1f;
+  --text-muted: #6e6e73;
+  --text-faint: #8e8e93;
+  --border: rgba(0, 0, 0, 0.11);
+  --border-strong: rgba(0, 0, 0, 0.18);
+  --accent: #007aff;
+  --accent-text: #ffffff;
+  --row-hover: rgba(0, 0, 0, 0.045);
+  --row-watched: rgba(0, 122, 255, 0.09);
+  --row-watched-hover: rgba(0, 122, 255, 0.14);
+  --danger: #d70015;
+  --shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.16);
+
+  --font-ui:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto,
+    "Helvetica Neue", sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --titlebar-h: 40px;
+  --row-h: 28px;
+  --radius: 6px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1e1e20;
+    --bg-chrome: #2a2a2d;
+    --bg-raised: #313135;
+    --bg-sunken: #17171a;
+    --text: #e9e9ec;
+    --text-muted: #9a9aa1;
+    --text-faint: #7c7c84;
+    --border: rgba(255, 255, 255, 0.09);
+    --border-strong: rgba(255, 255, 255, 0.16);
+    --accent: #0a84ff;
+    --accent-text: #ffffff;
+    --row-hover: rgba(255, 255, 255, 0.055);
+    --row-watched: rgba(10, 132, 255, 0.15);
+    --row-watched-hover: rgba(10, 132, 255, 0.22);
+    --danger: #ff453a;
+    --shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+  background-color: var(--bg);
+  accent-color: var(--accent);
+  -webkit-font-smoothing: antialiased;
+  /* A panel, not a document: nothing here is meant to be selected or
+     dragged out. Text that is worth copying opts back in below. */
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-radius: 3px;
+}
+
+/* ---------------------------------------------------------------- Titlebar */
+
+.titlebar {
+  flex: 0 0 auto;
+  height: var(--titlebar-h);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px 0 12px;
+  background-color: var(--bg-chrome);
+  border-bottom: 1px solid var(--border);
+}
+
+.titlebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-muted);
+  /* The whole bar drags the window, so the label must not swallow the
+     gesture. */
+  pointer-events: none;
+}
+
+.titlebar__brand .icon {
+  width: 14px;
+  height: 14px;
+  fill: var(--accent);
+}
+
+.titlebar__spacer {
+  flex: 1 1 auto;
+}
+
+/* Segmented control ------------------------------------------------------ */
+
+.segmented {
+  display: flex;
+  padding: 2px;
+  gap: 2px;
+  border-radius: var(--radius);
+  background-color: var(--bg-sunken);
+}
+
+.segment {
+  -webkit-appearance: none;
+  appearance: none;
+  border: 0;
+  margin: 0;
+  padding: 3px 12px;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: default;
+  white-space: nowrap;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.segment:hover:not(.is-active) {
+  color: var(--text);
+}
+
+.segment.is-active {
+  color: var(--text);
+  background-color: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+}
+
+/* Icon button ------------------------------------------------------------ */
+
+.icon-button {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  background: transparent;
+  cursor: default;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease;
+}
+
+.icon-button .icon {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.icon-button:hover {
+  color: var(--danger);
+  background-color: var(--row-hover);
+}
+
+/* ------------------------------------------------------------- Tab panels */
+
+.content {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tab-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: none;
+  flex-direction: column;
+  animation: panel-in 0.14s ease both;
+}
+
+.tab-panel.is-active {
+  display: flex;
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* --------------------------------------------------------------- Toolbar */
+
+.toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
+.field {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+}
+
+.field__icon {
+  position: absolute;
+  left: 8px;
+  width: 12px;
+  height: 12px;
+  fill: var(--text-faint);
+  pointer-events: none;
+}
+
+.field input[type="text"] {
+  width: 100%;
+  height: 26px;
+  padding: 0 26px 0 25px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--text);
+  background-color: var(--bg-sunken);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  transition:
+    border-color 0.12s ease,
+    background-color 0.12s ease;
+}
+
+.field input[type="text"]::placeholder {
+  color: var(--text-faint);
+}
+
+.field input[type="text"]:focus {
+  outline: none;
+  background-color: var(--bg-raised);
+  border-color: var(--accent);
+}
+
+.field__clear:not([hidden]) {
+  -webkit-appearance: none;
+  appearance: none;
+  position: absolute;
+  right: 5px;
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--bg-sunken);
+  background-color: var(--text-faint);
+  cursor: default;
+}
+
+.field__clear .icon {
+  width: 7px;
+  height: 7px;
+  fill: currentColor;
+}
+
+.field__clear:hover {
+  background-color: var(--text-muted);
+}
+
+/* Watched counter pill --------------------------------------------------- */
+
+.pill:not([hidden]) {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 9px;
+  border-radius: var(--radius);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-text);
+  background-color: var(--accent);
+}
+
+.pill__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pill__dot,
+  .tab-panel {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------- Process table */
+
+.table-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  /* The command column is truncated rather than allowed to widen the table,
+     so this container never scrolls sideways. */
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-top: 1px solid var(--border);
+}
+
+.process-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.process-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 24px;
+  padding: 0 10px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  background-color: var(--bg-chrome);
+  border-bottom: 1px solid var(--border);
+  /* `position: sticky` on a cell leaves its border behind when scrolling. */
+  background-clip: padding-box;
+}
+
+.process-table td {
+  height: var(--row-h);
+  padding: 0 10px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  border-bottom: 1px solid var(--border);
+}
+
+.process-table tbody tr {
+  transition: background-color 0.1s ease;
+}
+
+.process-table tbody tr:hover {
+  background-color: var(--row-hover);
+}
+
+.col-check {
+  width: 32px;
+}
+
+.col-pid {
+  width: 62px;
+}
+
+.col-name {
+  width: 150px;
+}
+
+.cell-check {
+  text-align: center;
+}
+
+.cell-check input[type="checkbox"] {
+  display: block;
+  width: 13px;
+  height: 13px;
+  margin: 0 auto;
+  cursor: default;
+}
+
+.cell-pid {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.cell-name {
+  font-weight: 500;
+}
+
+.cell-cmd {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  direction: rtl;
+  text-align: left;
+}
+
+/* `direction: rtl` truncates the head of the path instead of the tail, which
+   is the informative end of a command line. The span restores logical order
+   so the text itself still reads left to right. */
+.cell-cmd > span {
+  direction: ltr;
+  unicode-bidi: bidi-override;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* Watched rows ----------------------------------------------------------- */
+
+.process-table tbody tr.is-watched {
+  background-color: var(--row-watched);
+}
+
+.process-table tbody tr.is-watched:hover {
+  background-color: var(--row-watched-hover);
+}
+
+.process-table tbody tr.is-watched .cell-check {
+  position: relative;
+}
+
+.process-table tbody tr.is-watched .cell-check::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background-color: var(--accent);
+}
+
+.process-table tbody tr.is-watched .cell-name {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Empty state ------------------------------------------------------------ */
+
+.empty-state:not([hidden]) {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 24px;
+  text-align: center;
+  border-top: 1px solid var(--border);
+}
+
+.empty-state .icon {
+  width: 26px;
+  height: 26px;
+  fill: var(--text-faint);
+  opacity: 0.55;
+}
+
+.empty-state__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.empty-state__hint {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  max-width: 34ch;
+}
+
+/* Status bar ------------------------------------------------------------- */
+
+.statusbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 12px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+  background-color: var(--bg-chrome);
+  border-top: 1px solid var(--border);
+}
+
+/* ----------------------------------------------------------- Preferences */
+
+.prefs {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 16px 16px;
+}
+
+.prefs__inner {
+  max-width: 520px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.prefs__group {
+  display: flex;
+  flex-direction: column;
+}
+
+.prefs__legend {
+  margin: 0 0 6px 2px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.prefs__card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background-color: var(--bg-raised);
+  overflow: hidden;
+}
+
+.pref-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.pref-row:last-child {
+  border-bottom: 0;
+}
+
+.pref-row--stacked {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.pref-row__text {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.pref-row__label {
+  font-size: 12.5px;
+}
+
+.pref-row__hint {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--text-faint);
+}
+
+/* Switch ----------------------------------------------------------------- */
+
+.switch {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 0 0 auto;
+  position: relative;
+  width: 34px;
+  height: 20px;
+  margin: 0;
+  border-radius: 10px;
+  background-color: var(--border-strong);
+  cursor: default;
+  transition: background-color 0.16s ease;
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+  transition: transform 0.16s ease;
+}
+
+.switch:checked {
+  background-color: var(--accent);
+}
+
+.switch:checked::after {
+  transform: translateX(14px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .switch,
+  .switch::after {
+    transition: none;
+  }
+}
+
+/* Preference text input -------------------------------------------------- */
+
+.prefs input[type="text"] {
+  width: 100%;
+  height: 26px;
+  padding: 0 8px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text);
+  background-color: var(--bg-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.prefs input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.prefs input[type="text"][aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+.pref-row__error {
+  font-size: 11px;
+  color: var(--danger);
+}
+
+/* Actions ---------------------------------------------------------------- */
+
+.prefs__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.prefs__saved {
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+
+.button {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 26px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent-text);
+  background-color: var(--accent);
+  cursor: default;
+}
+
+.button:hover {
+  filter: brightness(1.08);
+}
+
+.button:active {
+  filter: brightness(0.92);
+}
+
+/* --------------------------------------------------- In-app notification */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 32px);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--accent-text);
+  background-color: var(--accent);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+  animation: toast-in 0.18s ease both;
+}
+
+.toast--error {
+  background-color: var(--danger);
+}
+
+.toast__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* Scrollbars ------------------------------------------------------------- */
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 5px;
+  background-clip: padding-box;
+  background-color: var(--border-strong);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--text-faint);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ------------------------------------------------------------------ A11y */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

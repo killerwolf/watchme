@@ -7,6 +7,54 @@ and the project adheres to [semantic versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- **The window was rebuilt as a menu-bar panel rather than a desktop app.**
+  It is undecorated, always on top, and hides the moment it loses focus, but
+  it was laid out like a document window: an 80 px icon rail down the side,
+  64 px table rows, and 20 px of padding around everything. Six processes fit
+  on screen at once. The rail is now a segmented control in a 40 px title
+  bar, rows are 28 px, and thirteen processes fit in the same window.
+- **The interface follows the system appearance.** It was hardcoded to one
+  dark grey (`#313335`) regardless of what macOS was set to. Light and dark
+  palettes are now defined as custom properties and swapped through
+  `prefers-color-scheme`, using the system accent blue.
+- **Preferences reads as a settings pane.** Bare checkboxes in a stack became
+  three labelled groups of switches, each setting carrying a line explaining
+  what it does.
+- The styles moved out of a `<style>` block in `index.html` and into
+  `styles.css`.
+
+### Fixed
+
+- **The process table no longer scrolls sideways.** Command lines are long
+  enough to push the table past the width of the window, so reading the
+  Command column meant scrolling horizontally and losing sight of the name it
+  belonged to. The table is `table-layout: fixed`, and a command that does not
+  fit is truncated at the *head* — the informative end of a command line is
+  the tail, so `…/node_modules/.bin/vite --port 1420` is what survives, not
+  `/opt/homebrew/bin/node /Volumes/…`. The full string is on the row's
+  tooltip.
+- **Watched rows are visible again.** `listProcesses()` tagged them with a
+  `highlighted-row` class that no CSS had ever defined, so the only sign a
+  process was being watched was the checkbox itself. Watched rows now carry an
+  accent bar and a tint, sort to the top of the list, and are counted in the
+  toolbar and the status bar.
+- **The list no longer flickers or drops clicks.** The refresh every two
+  seconds rebuilt the whole table body from scratch, which discarded the
+  scroll position and could swallow a click that landed mid-rebuild. Rows are
+  now reused and keyed by PID, and keyboard focus survives a reorder.
+- **An invalid filter expression explains itself.** Preferences accepted any
+  string; the failure surfaced later, as a desktop notification from the
+  process list, with the process list left empty. The field now validates as
+  you type, and saving is blocked until the expression compiles.
+- **The window can be moved.** Removing the title bar left no drag handle
+  anywhere in the interface, so the panel could not be repositioned. The new
+  title bar is a drag region.
+- The process list stops polling the native side while the window is hidden,
+  and reads the filter expression from the preference cache instead of
+  crossing the IPC boundary on every refresh.
+
 ### Added
 
 - **Notifications and sound can each be turned off**, from the Preferences

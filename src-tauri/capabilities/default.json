@@ -3,5 +3,9 @@
   "identifier": "default",
   "description": "Default permissions for the WatchMe window",
   "windows": ["main"],
-  "permissions": ["core:default", "notification:default"]
+  "permissions": [
+    "core:default",
+    "core:window:allow-start-dragging",
+    "notification:default"
+  ]
 }
