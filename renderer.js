@@ -1,10 +1,26 @@
 // renderer.js
+import { invoke } from '@tauri-apps/api/core';
+import {
+  isPermissionGranted,
+  requestPermission,
+  sendNotification,
+} from '@tauri-apps/plugin-notification';
 
 import { createProcessMonitor } from './monitoring.js';
 import { DEFAULT_PREFERENCES } from './preferences.js';
 
+const watchmeApi = {
+  getProcesses: () => invoke('get_processes'),
+  getPreferences: () => invoke('get_preferences'),
+  savePreferences: (preferences) =>
+    invoke('save_preferences', { newPreferences: preferences }),
+  updateTrayTooltip: (numProcesses) =>
+    invoke('update_tray_tooltip', { numProcesses }),
+  quitApp: () => invoke('quit_app'),
+};
+
 const processMonitor = createProcessMonitor({
-  getProcesses: () => window.electronAPI.getProcesses(),
+  getProcesses: () => watchmeApi.getProcesses(),
 });
 
 processMonitor.onEnded((pid, processName) => {
@@ -34,7 +50,7 @@ processMonitor.onChange(() => updateMonitoringStatus());
 let cachedPreferences = { ...DEFAULT_PREFERENCES };
 
 async function refreshPreferences() {
-  const stored = await window.electronAPI.getPreferences();
+  const stored = await watchmeApi.getPreferences();
   cachedPreferences = { ...cachedPreferences, ...stored };
   return cachedPreferences;
 }
@@ -50,22 +66,22 @@ const logger = {
 };
 
 // Single owner of the "granted / ask / denied" branch. Desktop notifications
-// vary by title and icon (WatchMe vs. Process Ended); when they can't be
-// shown, every caller falls back to the same in-app banner.
-function showDesktopNotification({ title, message, type = 'info', icon }) {
-  if (Notification.permission === 'granted') {
-    new Notification(title, { body: message, icon });
-  } else if (Notification.permission !== 'denied') {
-    Notification.requestPermission().then((permission) => {
-      if (permission === 'granted') {
-        new Notification(title, { body: message, icon });
-      } else {
-        showFallbackNotification(message, type);
-      }
-    });
-  } else {
-    showFallbackNotification(message, type);
+// vary by title (WatchMe vs. Process Ended); when they can't be shown, every
+// caller falls back to the same in-app banner.
+async function showDesktopNotification({ title, message, type = 'info' }) {
+  try {
+    let permission = await isPermissionGranted();
+    if (!permission) {
+      permission = (await requestPermission()) === 'granted';
+    }
+    if (permission) {
+      sendNotification({ title, body: message });
+      return;
+    }
+  } catch (error) {
+    logger.error('Desktop notification could not be shown:', error);
   }
+  showFallbackNotification(message, type);
 }
 
 // Enhanced notification system to replace alerts
@@ -74,7 +90,6 @@ function showNotification(message, type = 'info') {
     title: 'WatchMe',
     message,
     type,
-    icon: 'misc/tray-icon.png',
   });
 }
 
@@ -126,24 +141,15 @@ function showFallbackNotification(message, type) {
   }, 5000);
 }
 
-// renderer.js is now loaded as an ES module, so top-level declarations no
-// longer land on `window` automatically. The Electron test harness
-// (test/harness/electron-entry.js) drives this function directly via
-// executeJavaScript for the XSS regression test (issue #6) — keep it
-// reachable there.
+// renderer.js is loaded as an ES module, so top-level declarations do not
+// land on `window` automatically. Keep this function reachable for the
+// in-app fallback notification and manual smoke testing.
 window.showFallbackNotification = showFallbackNotification;
 
 function initialize() {
   refreshPreferences();
 
   // Initialize notifications
-  if (
-    Notification.permission !== 'granted' &&
-    Notification.permission !== 'denied'
-  ) {
-    Notification.requestPermission();
-  }
-
   // Sidebar Navigation Event Listeners
   for (const item of document.querySelectorAll('.sidebar-item')) {
     item.addEventListener('click', () => {
@@ -166,7 +172,7 @@ function initialize() {
   });
 
   document.getElementById('quit-app-button').addEventListener('click', () => {
-    window.electronAPI.quitApp();
+    watchmeApi.quitApp();
   });
 
   // Enable keyboard navigation for the Quit App button
@@ -174,7 +180,7 @@ function initialize() {
     .getElementById('quit-app-button')
     .addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
-        window.electronAPI.quitApp();
+        watchmeApi.quitApp();
       }
     });
 
@@ -233,7 +239,7 @@ async function savePreferences() {
     document.getElementById('notificationSound').checked;
 
   try {
-    const { loginItemSuccess } = await window.electronAPI.savePreferences({
+    const { loginItemSuccess } = await watchmeApi.savePreferences({
       autoLaunch,
       prefilterRegex,
       desktopNotifications,
@@ -262,14 +268,14 @@ async function savePreferences() {
 }
 
 async function listProcesses() {
-  const processes = await window.electronAPI.getProcesses();
+  const processes = await watchmeApi.getProcesses();
 
   const filterValue = document
     .getElementById('filter-input')
     .value.toLowerCase();
 
   // Get the prefilter regex from preferences
-  const prefs = await window.electronAPI.getPreferences();
+  const prefs = await watchmeApi.getPreferences();
   const { prefilterRegex } = prefs;
   logger.debug('Prefilter Regex:', prefilterRegex);
 
@@ -425,7 +431,7 @@ function playNotificationSound() {
 
 function updateMonitoringStatus() {
   // Send the number of monitored processes to main process
-  window.electronAPI.updateTrayTooltip(processMonitor.size);
+  watchmeApi.updateTrayTooltip(processMonitor.size);
 }
 
 // Initialize the app when the content is loaded

@@ -34,6 +34,9 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Install dependencies
         run: npm ci
 
@@ -48,9 +51,6 @@ jobs:
 
       - name: Test build (pack only)
         run: npm run pack
-
-      - name: Verify packaged app
-        run: npm run verify:pack
 
   build:
     name: Build & Publish mac
@@ -74,6 +74,9 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
       # --allow-same-version became necessary once package.json started
       # carrying the real version: without it, npm exits with "Version not
       # changed" when the tag already matches the file. The step is still
@@ -91,25 +94,16 @@ jobs:
         id: channel
         run: |
           # A semver prerelease tag (v1.0.0-rc.1) publishes as a prerelease.
-          # electron-updater ignores those by default, so the prerelease
-          # never reaches existing installs. A plain tag publishes as a
-          # normal release.
+          # A plain tag publishes as a normal release; prerelease tags are marked
+          # as such so they do not appear as stable downloads.
           if [[ "${{ github.ref_name }}" == *-* ]]; then
             echo "release_type=prerelease" >> "$GITHUB_OUTPUT"
           else
             echo "release_type=release" >> "$GITHUB_OUTPUT"
           fi
 
-      # The release is created HERE, before the build, and that is deliberate.
-      #
-      # electron-builder starts one publisher per architecture, in parallel.
-      # If the release does not exist yet, both try to create it at the same
-      # time: the first wins, the second gets a "422 already_exists" that
-      # fails every one of its uploads. Seen on v0.11.1-rc.1: 1 file
-      # published out of 8, 14 errors.
-      #
-      # Creating it up front means both publishers find it and simply drop
-      # their files in. There is no longer a race to lose.
+      # Create the release before building so the bundle upload has a stable
+      # release target.
       - name: Create GitHub release
         if: startsWith(github.ref, 'refs/tags/')
         run: |
@@ -136,8 +130,8 @@ jobs:
           ' CHANGELOG.md)
 
           if [ -n "$(echo "$notes" | tr -d '[:space:]')" ]; then
-            printf '%s\n' "$notes" > /tmp/release-notes.md
-            args+=(--notes-file /tmp/release-notes.md)
+            printf '%s\n' "$notes" > release-notes.generated.md
+            args+=(--notes-file release-notes.generated.md)
           else
             echo "No CHANGELOG section for $version, using generated notes."
             args+=(--generate-notes)
@@ -145,27 +139,20 @@ jobs:
 
           gh release create "$tag" "${args[@]}"
 
-      # electron-builder drops its artefacts into the release above.
-      #
-      # Two precautions:
-      #  - only a tag publishes. `workflow_dispatch` is for verifying a
-      #    build, not for creating a release named after the package.json
-      #    version.
-      #  - releaseType is forced. electron-builder defaults to `draft`,
-      #    which would publish invisible releases.
-      - name: Build and publish for mac
+      - name: Build macOS bundles
         run: |
-          if [ "${{ startsWith(github.ref, 'refs/tags/') }}" = "true" ]; then
-            npm run build:mac -- \
-              --publish always \
-              -c.publish.releaseType=${{ steps.channel.outputs.release_type }}
-          else
-            npm run build:mac -- --publish never
-          fi
+          npm run build:mac
+
+      - name: Upload release assets
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          gh release upload "${{ github.ref_name }}" \
+            src-tauri/target/release/bundle/dmg/* \
+            --clobber
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
           name: dist-mac
-          path: dist/
+          path: src-tauri/target/release/bundle/
           retention-days: 30

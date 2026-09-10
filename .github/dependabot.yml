@@ -16,17 +16,15 @@ updates:
         update-types:
           - minor
           - patch
-    ignore:
-      # ps-list exposes pid/name/cmd straight to the renderer: a major has
-      # to be reviewed by hand, not merged as it lands (see #16).
-      - dependency-name: ps-list
-        update-types:
-          - version-update:semver-major
-      # electron-store carries preference persistence: a major can lose
-      # users their settings (see #15).
-      - dependency-name: electron-store
-        update-types:
-          - version-update:semver-major
+
+  - package-ecosystem: cargo
+    directory: /src-tauri
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - deps
 
   - package-ecosystem: github-actions
     directory: /

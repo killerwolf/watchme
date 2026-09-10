@@ -59,10 +59,9 @@ the release workflow only produces macOS binaries today. See
 - **No network access whatsoever.** The window runs under a
   `default-src 'none'` Content Security Policy; the icons and the notification sound are
   bundled. Nothing about your processes leaves the machine, because nothing can leave it.
-- **Two runtime dependencies** — [`ps-list`](https://github.com/sindresorhus/ps-list) to
-  read the process table and
-  [`electron-store`](https://github.com/sindresorhus/electron-store) to persist
-  preferences.
+- **A small native core** — Tauri 2 and Rust read the process table, persist
+  preferences, own the tray, and manage launch-at-login. The HTML/CSS/JS
+  frontend remains deliberately small and offline.
 
 ## Install
 
@@ -116,28 +115,30 @@ npm install
 npm start
 ```
 
-Needs Node.js ≥ 22.12.0 (`.nvmrc` pins `lts/jod`).
+Needs Node.js ≥ 22.12.0 (`.nvmrc` pins `lts/jod`) and the stable Rust toolchain
+required by Tauri 2.
 
 ```bash
-npm test          # unit tests, then the Electron harness
+npm test          # JavaScript unit tests, then Rust core tests
 npm run check     # lint and format, via Biome
-npm run build:mac # produces the .dmg and .zip in dist/
+npm run build:mac # produces a macOS app and .dmg in src-tauri/target/
 ```
 
 `monitoring.js` (the watched set and its polling loop) and `tray-status.js` (badge and
-tooltip) deliberately carry no Electron or DOM dependency, so both run under plain
-`node --test` without starting the app.
+tooltip) deliberately carry no Tauri or DOM dependency, so both run under plain
+`node --test` without starting the app. The process list, tray, persistence, and
+launch-at-login commands live in `src-tauri/src/lib.rs`.
 
 [CONTRIBUTING.md](CONTRIBUTING.md) covers the project layout, the checks CI runs, and
 the release procedure.
 
 ## Roadmap
 
-- **Windows and Linux releases.** `electron-builder` already carries `nsis`, `portable`,
-  `AppImage` and `deb` targets; they are not built or tested, and the platform-specific
-  branches in window positioning have never run outside macOS.
-- **Automatic updates.** The release now ships the `latest-mac.yml` and `.blockmap`
-  files `electron-updater` needs. Wiring up the updater itself is the remaining work.
+- **Windows and Linux releases.** Tauri carries NSIS, AppImage, and deb targets, but
+  the release workflow currently builds macOS only. These targets are not built or
+  tested yet.
+- **Automatic updates.** Tauri updater signing and update metadata are not configured
+  yet; releases currently use the native installers.
 - Custom notification rules, process grouping, and remote monitoring — ideas, not
   commitments.
 
@@ -152,6 +153,6 @@ Something broken, or an idea? [Open an issue](https://github.com/killerwolf/watc
 
 ## Acknowledgements
 
-Built with [Electron](https://www.electronjs.org/). Icons are
+Built with [Tauri](https://tauri.app/) and Rust. Icons are
 [Font Awesome Free](https://fontawesome.com/license/free) 6.7.2 (CC BY 4.0), inlined as
 SVG so the app stays offline.

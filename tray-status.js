@@ -1,7 +1,7 @@
 // tray-status.js
 //
 // Turns the monitored-process count into what the tray shows: the badge
-// text beside the icon and the hover tooltip. Kept free of Electron so it
+// text beside the icon and the hover tooltip. Kept free of Tauri so it
 // can be exercised under plain `node --test`.
 
 // Past this the badge would start stretching the menu bar, so it caps.

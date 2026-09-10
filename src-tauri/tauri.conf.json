@@ -1,0 +1,46 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "WatchMe",
+  "version": "0.11.1",
+  "identifier": "com.mindmystory.watchme",
+  "build": {
+    "beforeDevCommand": "npm run frontend:dev",
+    "beforeBuildCommand": "npm run frontend:build",
+    "devUrl": "http://127.0.0.1:1420",
+    "frontendDist": "../dist-frontend"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "WatchMe",
+        "width": 800,
+        "height": 500,
+        "minWidth": 400,
+        "minHeight": 300,
+        "visible": false,
+        "decorations": false,
+        "resizable": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data: asset: https://asset.localhost; media-src 'self' asset: https://asset.localhost; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["dmg", "app"],
+    "category": "Utility",
+    "shortDescription": "Watch running processes and notify when they exit",
+    "longDescription": "WatchMe is a menu-bar process watcher.",
+    "copyright": "Copyright © 2024 @killerwolf",
+    "resources": ["../misc/notification-sound.wav", "../misc/tray-icon.png"],
+    "icon": ["../assets/build/WatchMe.icns", "../assets/icon.png"],
+    "macOS": {
+      "minimumSystemVersion": "13.0",
+      "entitlements": "../assets/build/entitlements.mac.plist"
+    }
+  }
+}

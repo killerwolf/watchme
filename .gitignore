@@ -6,7 +6,9 @@ yarn-error.log*
 
 # Build outputs
 dist/
+dist-frontend/
 out/
+src-tauri/target/
 
 # Environment variables
 .env
@@ -87,7 +89,7 @@ jspm_packages/
 # DynamoDB Local files
 .dynamodb/
 
-# Electron build outputs
+# Desktop build outputs
 app/
 packages/
 

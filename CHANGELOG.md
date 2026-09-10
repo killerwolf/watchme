@@ -17,6 +17,10 @@ and the project adheres to [semantic versioning](https://semver.org/).
 
 ### Changed
 
+- **The desktop runtime is now Tauri 2 + Rust.** The native core owns the
+  process listing, tray icon, preference file, launch-at-login setting, and
+  quit action. The existing offline frontend keeps the same process polling,
+  filtering, notifications, sound, and hide-on-blur behavior.
 - **The README now says what the app does, and who it is for.** An "Is this
   the right tool?" section names outright what WatchMe does *not* do — no
   metrics, no killing processes — and the activity monitor that does. The
@@ -26,11 +30,10 @@ and the project adheres to [semantic versioning](https://semver.org/).
   subscription.
 - The package description and the README no longer mention Windows or Linux,
   which the release does not produce.
-- **The demo GIF was re-recorded**, and `npm run demo:build` regenerates it.
-  The old one dated from before 0.11.0: it still showed Electron's
-  placeholder icon, and it carried a username and hostname in the terminal
-  title bar. The new one shows the tray badge, which did not exist when the
-  old one was made, and is 255 kB against 1.4 MB.
+- **The demo GIF was re-recorded.** The old one dated from before 0.11.0:
+  it showed a placeholder icon and carried a username and hostname in the
+  terminal title bar. The new one shows the tray badge, which did not exist
+  when the old one was made, and is 255 kB against 1.4 MB.
 - **Everything in the repository is now written in English** — this file,
   the contributing guide, the code of conduct, and every code comment and
   test name. The README was already English; the rest was French, which made

@@ -9,6 +9,7 @@ the checks to pass, and the release procedure.
 
 - **Node.js ≥ 22.12.0** — the repo pins `lts/jod` in `.nvmrc`
 - **npm ≥ 10**
+- **Rust stable** and the Tauri 2 prerequisites
 - **macOS** for a full build: WatchMe only publishes macOS binaries today
   (see *Platforms* below)
 
@@ -21,54 +22,51 @@ npm install
 npm start
 ```
 
-`npm run dev` runs the same application with the `--dev` flag.
+`npm run dev` is an alias for `npm start` (`tauri dev`).
 
 ## Layout
 
 ```
 watchme/
-├── main.js              # Electron main process: window, tray, IPC
-├── preload.js           # contextIsolation bridge, channels from ipc-channels.json
-├── renderer.js          # UI: process list, filters, notifications
-├── index.html           # Single window, strict CSP, no remote resources
-├── monitoring.js        # Watched set + polling loop (DOM-free)
-├── tray-status.js       # Tray badge and tooltip (Electron-free)
-├── ipc-channels.json    # Channel names shared between main and preload
+├── src-tauri/            # Tauri 2 application, commands, tray, and Rust tests
+├── renderer.js           # UI: process list, filters, notifications
+├── index.html            # Single window, strict CSP, no remote resources
+├── vite.config.js        # Frontend bundle and packaged static assets
+├── monitoring.js         # Watched set + polling loop (DOM-free)
+├── tray-status.js        # Tray badge and tooltip (Tauri-free)
 ├── assets/              # App icons and build resources
 ├── misc/                # Logo, demo GIF, notification sound, tray icon
 ├── site/                # Landing page published to h4md1.fr/watchme/
 ├── tools/               # Asset generation scripts
-├── test/                # Unit tests + Electron harness
+├── test/                # Portable JavaScript unit tests
 ├── docs/agents/         # Conventions aimed at agents
 └── .github/workflows/   # CI, release and Pages
 ```
 
 `monitoring.js` and `tray-status.js` deliberately carry no dependency on
-Electron or the DOM. That is what lets them be exercised under `node --test`
-without starting the application.
+Tauri or the DOM. That is what lets them be exercised under `node --test`
+without starting the application. Rust core logic is tested with `cargo test`.
 
 ## Scripts
 
 | Script | Purpose |
 | --- | --- |
 | `npm start` | Run the application |
-| `npm test` | Unit tests, then the Electron tests |
+| `npm test` | JavaScript unit tests, then Rust core tests |
 | `npm run test:unit` | Unit tests alone (`node --test`) |
-| `npm run test:electron` | Tests that need an Electron runtime |
 | `npm run check` | Lint + format (Biome) |
 | `npm run check:fix` | Fix whatever is automatically fixable |
-| `npm run pack` | Build without an installer, for verification |
-| `npm run verify:pack` | Check the packaged application |
-| `npm run build:mac` | Produce the `.dmg` and `.zip` |
+| `npm run pack` | Debug Tauri bundle for local verification |
+| `npm run build:mac` | Produce the macOS `.app` and `.dmg` |
 
-CI runs `lint`, `format:check`, `test`, `pack` and `verify:pack`. Running
+CI runs `lint`, `format:check`, `test`, and `pack`. Running
 `npm run check && npm test && npm run pack` locally covers the essentials.
 
 ## Proposing a change
 
 1. Branch from `main`.
 2. Write the change, with a test as soon as the behaviour is testable.
-   Behaviour that can be extracted out of Electron deserves its own testable
+   Behaviour that can be extracted out of the desktop shell deserves its own testable
    module.
 3. Pass the checks above.
 4. Add an entry under `## [Unreleased]` in `CHANGELOG.md` if the change is
@@ -84,12 +82,10 @@ and use the labels `needs-triage`, `needs-info`, `ready-for-agent`,
 
 ## Platforms
 
-`electron-builder` carries Windows (`nsis`, `portable`) and Linux
-(`AppImage`, `deb`) targets, but the release workflow only builds macOS.
-Those targets are therefore **neither built nor tested** as things stand. A
-contribution that turns them on has to run them in CI too — window
-positioning and the tray badge both have platform-specific branches that have
-never run anywhere but macOS.
+Tauri carries Windows (`nsis`) and Linux (`AppImage`, `deb`) targets, but the
+release workflow only builds macOS. Those targets are therefore **neither
+built nor tested** as things stand. A contribution that turns them on has to
+run them in CI too.
 
 ## The landing page
 
@@ -116,13 +112,9 @@ is no version number to update by hand.
 5. The workflow creates the release, pulls its body from the matching
    `CHANGELOG.md` section, builds macOS and uploads the artefacts to it.
 
-A prerelease tag (`vX.Y.Z-rc.1`) publishes as a *pre-release*:
-`electron-updater` ignores those by default, so the prerelease never reaches
-existing installs.
-
-The release is created **before** the build, deliberately: electron-builder
-starts one publisher per architecture in parallel, and with no pre-existing
-release the second gets a `422 already_exists` that fails its uploads.
+A prerelease tag (`vX.Y.Z-rc.1`) publishes as a *pre-release*. Tauri's updater
+signing and update metadata are not configured yet; releases currently carry
+the built installers as GitHub release assets.
 
 ## Code of conduct
 

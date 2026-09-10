@@ -1,7 +1,7 @@
 // preferences.js
 //
 // The preference shape, and how whatever is on disk becomes a complete one.
-// Free of Electron and the DOM so both the main process and the renderer can
+// Free of Tauri and the DOM so both the native core and the renderer can
 // share it, and so it can be exercised under plain `node --test`.
 
 export const DEFAULT_PREFERENCES = {
