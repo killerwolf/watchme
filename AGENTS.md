@@ -95,6 +95,11 @@ Production users
 
 ## Pull Requests and Release Safety
 
+- Use Conventional Commits for commit messages:
+  `type(scope): imperative summary` (for example,
+  `feat(monitoring): add process group filters` or
+  `fix(tray): preserve the menu-bar badge`). Keep commits focused and avoid
+  mixing unrelated changes.
 - Pull Requests must identify the source and target branches explicitly.
 - Feature Pull Requests target `develop`.
 - Stabilization Pull Requests target `main` and must also synchronize fixes
