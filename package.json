@@ -18,7 +18,7 @@
   "scripts": {
     "start": "tauri dev",
     "dev": "tauri dev",
-    "test": "npm run test:unit && cargo test --manifest-path src-tauri/Cargo.toml",
+    "test": "npm run test:unit && npm run frontend:build && cargo test --manifest-path src-tauri/Cargo.toml",
     "test:unit": "node --test test/*.test.js",
     "frontend:dev": "vite --host 127.0.0.1",
     "frontend:build": "vite build",
