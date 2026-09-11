@@ -6,14 +6,21 @@ on:
   # `pull_request` run is attributed to the PR's branch, not to main. The
   # `build` job stays guarded by its refs/tags condition, so a push to main
   # publishes nothing.
+  #
+  # `develop` is where work actually lands — CONTRIBUTING points pull requests
+  # there — so it needs the same coverage: the pull request before a merge, and
+  # the merge commit after it. Without the second, a branch that was green on
+  # its own can still redden `develop` and nothing says so until release time.
   push:
     branches:
       - main
+      - develop
     tags:
       - 'v*'
   pull_request:
     branches:
       - main
+      - develop
   workflow_dispatch:
 
 env:
