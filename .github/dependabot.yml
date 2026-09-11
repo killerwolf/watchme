@@ -1,8 +1,13 @@
 version: 2
 
+# Every ecosystem targets `develop`, not the default branch: CONTRIBUTING
+# makes `develop` the branch pull requests land on, and `main` only ever
+# advances through a release. Left unset, Dependabot aims at `main` and its
+# bumps skip the branch that is actually developed and tested.
 updates:
   - package-ecosystem: npm
     directory: /
+    target-branch: develop
     schedule:
       interval: weekly
       day: monday
@@ -19,6 +24,7 @@ updates:
 
   - package-ecosystem: cargo
     directory: /src-tauri
+    target-branch: develop
     schedule:
       interval: weekly
       day: monday
@@ -28,6 +34,7 @@ updates:
 
   - package-ecosystem: github-actions
     directory: /
+    target-branch: develop
     schedule:
       interval: monthly
     labels:
