@@ -54,6 +54,18 @@ and the project adheres to [semantic versioning](https://semver.org/).
 - The process list stops polling the native side while the window is hidden,
   and reads the filter expression from the preference cache instead of
   crossing the IPC boundary on every refresh.
+- **The download buttons on the landing page resolve again.** The page picks
+  a release's DMGs by matching the architecture in the asset name, and it
+  only knew Electron's spelling — `arm64` and `x64`. Tauri names the same two
+  slices `aarch64` and `x86_64`, and `aarch64` does not contain `arm64`, so
+  the first Tauri release would have left both buttons pointing at the bare
+  releases page. Either spelling now matches, as does a universal bundle, and
+  a release carrying no Intel build hides that button rather than offering a
+  download that is not there.
+- **Release assets no longer carry build scratch.** Tauri leaves
+  `bundle_dmg.sh` and `WatchMe.icns` in the same folder as the installer, and
+  the upload step globbed the whole folder, so both were published as release
+  assets. It uploads `*.dmg` now.
 
 ### Added
 
