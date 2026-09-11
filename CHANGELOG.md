@@ -74,6 +74,12 @@ and the project adheres to [semantic versioning](https://semver.org/).
   completes whatever is on disk with the defaults, so a key the user has
   never saved reads as "on" rather than as `undefined`. That direction is
   the one thing here worth a test, and it has four.
+- **Intel Macs get a build again.** The move to Tauri quietly dropped the
+  `x64` slice that 0.11.x shipped, which would have left every Intel user on
+  0.11.1 with no upgrade and nothing to download. A release now builds both
+  `aarch64-apple-darwin` and `x86_64-apple-darwin` and publishes a DMG for
+  each. `npm run build:mac` produces both locally and needs both rustup
+  targets installed; `build:mac:arm` and `build:mac:intel` build one alone.
 
 ### Changed
 
