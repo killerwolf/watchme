@@ -10,9 +10,10 @@ and the project adheres to [semantic versioning](https://semver.org/).
 ## [0.12.0] - 2026-09-12
 
 **The runtime changed: WatchMe is a Tauri 2 + Rust application now**, not an
-Electron one. The window was rebuilt as a real menu-bar panel, the interface
-follows the system appearance rather than being permanently dark, and Intel
-Macs get a build again.
+Electron one. The download is 3.6 MB, against 114 MB for 0.11.1 — the app no
+longer carries a browser to draw a list of processes. The window was rebuilt
+as a real menu-bar panel, the interface follows the system appearance rather
+than being permanently dark, and Intel Macs get a build again.
 
 ### Added
 
