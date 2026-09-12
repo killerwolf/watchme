@@ -32,11 +32,17 @@ versioning, tags, and releases.
 WatchMe uses [Semantic Versioning](https://semver.org/) and Git tags prefixed
 with `v`.
 
-| Source branch | Lifecycle stage | Mandatory tag format | Example |
+| Source branch | Lifecycle stage | Required tag format | Example |
 | --- | --- | --- | --- |
 | `develop` | Unstable / work in progress | `v[NextVersion]-dev.[Date]` or `v[NextVersion]-alpha.[Number]` | `v1.2.0-dev.20260910` or `v1.2.0-alpha.1` |
 | `release/*` | Stabilization / testing | `v[Major].[Minor].[Patch]-rc.[Number]` | `v1.2.0-rc.1` |
 | `main` | Production / stable | `v[Major].[Minor].[Patch]` | `v1.2.0` |
+
+Tagging `develop` is **optional**. Cut a `-dev` or `-alpha` build when you want
+or need one — not on a schedule, and not to satisfy this document. The format
+above is what is required *when you choose to tag*; it is not a duty to tag
+every stage. The `-rc` gate before `main` is the one stage that is expected,
+because that is where a build is tested before it is promoted.
 
 ### Tagging Rules
 
@@ -62,6 +68,12 @@ following publication setting:
 | `vX.Y.Z-alpha.N` | **Set as a pre-release** enabled | Early adopters and validation |
 | `vX.Y.Z-rc.N` | **Set as a pre-release** enabled | Release-candidate testers |
 | `vX.Y.Z` | **Set as the latest release** enabled | General users |
+
+The release workflow creates the release and sets the prerelease flag itself on
+tag push, so this table describes what CI already does rather than a chore to
+perform by hand. A pushed tag carrying no release means the workflow did not
+complete for it — which is a CI question, not a bookkeeping gap to backfill
+after the fact.
 
 Agents must verify that the GitHub Release setting matches the tag before
 reporting a release as complete. Development and release-candidate builds must
