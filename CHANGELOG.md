@@ -121,6 +121,10 @@ than being permanently dark, and Intel Macs get a build again.
   releases page. Either spelling now matches, as does a universal bundle, and
   a release carrying no Intel build hides that button rather than offering a
   download that is not there.
+- **The install instructions name the right file.** The README told you to
+  look for `arm64` on the releases page, which is what Electron called the
+  Apple Silicon build. Tauri calls it `aarch64`, so the one instruction a
+  first-time user follows pointed at a filename no longer in the release.
 - **Release assets no longer carry build scratch.** Tauri leaves
   `bundle_dmg.sh` and `WatchMe.icns` in the same folder as the installer, and
   the upload step globbed the whole folder, so both were published as release
