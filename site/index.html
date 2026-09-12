@@ -133,6 +133,10 @@
         background: var(--bg); color: var(--fg); border-color: var(--line);
       }
       .btn.ghost:hover { border-color: var(--accent); color: var(--accent); filter: none; }
+      /* `.btn` sets its own display, so the attribute's default would lose.
+         This sits after it and qualifies it, which settles the cascade
+         without reaching for !important. */
+      [hidden], .btn[hidden] { display: none; }
       .hint { margin-top: 16px; font-size: 0.9rem; color: var(--fg-mut); }
       .meta { margin-top: 10px; font-size: 0.85rem; color: var(--fg-mut); }
 
@@ -260,7 +264,8 @@
         <div class="wrap">
           <h2>Download for macOS</h2>
           <p class="sub" style="margin-left: auto; margin-right: auto">
-            Free and open source. Pick the build that matches your Mac.
+            Free and open source.
+            <span id="dl-pick">Pick the build that matches your Mac.</span>
           </p>
           <div class="dl-row">
             <a class="btn" id="dl-arm" href="https://github.com/killerwolf/watchme/releases/latest">
@@ -273,9 +278,11 @@
             </a>
           </div>
           <p class="hint">
-            Not sure which you have? Apple menu → About This Mac. “Apple M…”
-            means Apple Silicon. Requires macOS 13 (Ventura) or later.
+            <span id="dl-which">Not sure which you have? Apple menu → About
+            This Mac. “Apple M…” means Apple Silicon.</span>
+            Requires macOS 13 (Ventura) or later.
           </p>
+          <p class="hint" id="dl-note" hidden></p>
           <p class="meta" id="rel-meta">
             <a href="https://github.com/killerwolf/watchme/releases">All releases</a>
             ·
@@ -477,14 +484,33 @@
           );
           if (!res.ok) return;
           const rel = await res.json();
-          const dmg = (arch) =>
+          // Electron named the slices arm64 and x64; Tauri names the same two
+          // aarch64 and x86_64, and "aarch64" does not contain "arm64" -- an
+          // exact-substring match on one spelling silently resolves nothing.
+          // Match either spelling, plus a universal bundle, which serves both.
+          const dmg = (...spellings) =>
             (rel.assets || []).find(
-              (a) => a.name.endsWith(".dmg") && a.name.includes(arch)
+              (a) =>
+                a.name.endsWith(".dmg") &&
+                spellings.some((s) => a.name.includes(s))
             );
-          const arm = dmg("arm64");
-          const intel = dmg("x64");
+          const arm = dmg("arm64", "aarch64", "universal");
+          const intel = dmg("x64", "x86_64", "universal");
           if (arm) document.getElementById("dl-arm").href = arm.browser_download_url;
-          if (intel) document.getElementById("dl-intel").href = intel.browser_download_url;
+          if (intel) {
+            document.getElementById("dl-intel").href = intel.browser_download_url;
+          } else {
+            // Offering a button for a build the release does not carry sends
+            // Intel users to a page with nothing on it for them. Say so instead.
+            document.getElementById("dl-intel").hidden = true;
+            // With one button there is no choice to make, so the copy that
+            // frames it as a choice goes too.
+            document.getElementById("dl-pick").hidden = true;
+            document.getElementById("dl-which").hidden = true;
+            const note = document.getElementById("dl-note");
+            note.textContent = "This release ships an Apple Silicon build only.";
+            note.hidden = false;
+          }
           if (rel.tag_name) {
             const meta = document.getElementById("rel-meta");
             const date = rel.published_at

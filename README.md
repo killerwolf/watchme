@@ -66,7 +66,7 @@ the release workflow only produces macOS binaries today. See
 ## Install
 
 1. Download the latest `.dmg` from [h4md1.fr/watchme](https://h4md1.fr/watchme/) or
-   the [Releases page](https://github.com/killerwolf/watchme/releases/latest) — `arm64`
+   the [Releases page](https://github.com/killerwolf/watchme/releases/latest) — `aarch64`
    for Apple Silicon, `x64` for Intel.
 2. Open it and drag **WatchMe** to Applications.
 3. Launch it. It appears in the menu bar, not the Dock.

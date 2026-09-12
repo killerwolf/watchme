@@ -1,6 +1,6 @@
 {
   "name": "watchme",
-  "version": "0.11.1",
+  "version": "0.12.0",
   "description": "macOS menu bar app that watches running processes and notifies you the moment one exits.",
   "type": "module",
   "homepage": "https://h4md1.fr/watchme/",
@@ -18,14 +18,16 @@
   "scripts": {
     "start": "tauri dev",
     "dev": "tauri dev",
-    "test": "npm run test:unit && cargo test --manifest-path src-tauri/Cargo.toml",
+    "test": "npm run test:unit && npm run frontend:build && cargo test --manifest-path src-tauri/Cargo.toml",
     "test:unit": "node --test test/*.test.js",
     "frontend:dev": "vite --host 127.0.0.1",
     "frontend:build": "vite build",
     "icon:build": "rsvg-convert -w 1024 -h 1024 assets/icon.svg -o assets/icon.png",
     "sound:build": "node tools/build-notification-sound.mjs",
     "build": "tauri build",
-    "build:mac": "tauri build --bundles app,dmg",
+    "build:mac": "npm run build:mac:arm && npm run build:mac:intel",
+    "build:mac:arm": "tauri build --target aarch64-apple-darwin --bundles app,dmg",
+    "build:mac:intel": "tauri build --target x86_64-apple-darwin --bundles app,dmg",
     "build:win": "tauri build --bundles nsis",
     "build:linux": "tauri build --bundles appimage,deb",
     "build:all": "tauri build",
@@ -57,7 +59,7 @@
     "@biomejs/biome": "^2.5.12",
     "@tauri-apps/cli": "^2.5.0",
     "rimraf": "^6.1.3",
-    "vite": "^7.0.0"
+    "vite": "^8.2.2"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.5.0",

@@ -9,7 +9,9 @@ the checks to pass, and the release procedure.
 
 - **Node.js ≥ 22.12.0** — the repo pins `lts/jod` in `.nvmrc`
 - **npm ≥ 10**
-- **Rust stable** and the Tauri 2 prerequisites
+- **Rust stable** and the Tauri 2 prerequisites. A full `build:mac` builds both
+  macOS slices, so it needs both targets:
+  `rustup target add aarch64-apple-darwin x86_64-apple-darwin`
 - **macOS** for a full build: WatchMe only publishes macOS binaries today
   (see *Platforms* below)
 
@@ -57,7 +59,9 @@ without starting the application. Rust core logic is tested with `cargo test`.
 | `npm run check` | Lint + format (Biome) |
 | `npm run check:fix` | Fix whatever is automatically fixable |
 | `npm run pack` | Debug Tauri bundle for local verification |
-| `npm run build:mac` | Produce the macOS `.app` and `.dmg` |
+| `npm run build:mac` | Produce the `.app` and `.dmg` for both macOS slices |
+| `npm run build:mac:arm` | Apple Silicon slice alone |
+| `npm run build:mac:intel` | Intel slice alone |
 
 CI runs `lint`, `format:check`, `test`, and `pack`. Running
 `npm run check && npm test && npm run pack` locally covers the essentials.
@@ -85,10 +89,16 @@ and use the labels `needs-triage`, `needs-info`, `ready-for-agent`,
 
 ## Platforms
 
-Tauri carries Windows (`nsis`) and Linux (`AppImage`, `deb`) targets, but the
-release workflow only builds macOS. Those targets are therefore **neither
-built nor tested** as things stand. A contribution that turns them on has to
-run them in CI too.
+A release builds both macOS slices — `aarch64-apple-darwin` and
+`x86_64-apple-darwin` — and publishes a DMG for each. Tauri also carries
+Windows (`nsis`) and Linux (`AppImage`, `deb`) targets, but the release
+workflow builds neither, so they are **neither built nor tested** as things
+stand. A contribution that turns them on has to run them in CI too.
+
+Note that the Tauri bundler spells the Intel slice `x64` in the DMG filename
+(`WatchMe_X.Y.Z_x64.dmg`) and the Apple Silicon one `aarch64`. The landing
+page matches both spellings, and `x86_64` and `universal` besides, so a change
+in bundler naming does not silently break the download buttons.
 
 ## The landing page
 
