@@ -7,8 +7,43 @@ and the project adheres to [semantic versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-09-12
+
+**The runtime changed: WatchMe is a Tauri 2 + Rust application now**, not an
+Electron one. The download is 3.6 MB, against 114 MB for 0.11.1 — the app no
+longer carries a browser to draw a list of processes. The window was rebuilt
+as a real menu-bar panel, the interface follows the system appearance rather
+than being permanently dark, and Intel Macs get a build again.
+
+### Added
+
+- **Notifications and sound can each be turned off**, from the Preferences
+  tab. Both default to on, including for anyone upgrading: `preferences.js`
+  completes whatever is on disk with the defaults, so a key the user has
+  never saved reads as "on" rather than as `undefined`. That direction is
+  the one thing here worth a test, and it has four.
+- **Intel Macs get a build again.** The move to Tauri quietly dropped the
+  `x64` slice that 0.11.x shipped, which would have left every Intel user on
+  0.11.1 with no upgrade and nothing to download. A release now builds both
+  `aarch64-apple-darwin` and `x86_64-apple-darwin` and publishes a DMG for
+  each. `npm run build:mac` produces both locally and needs both rustup
+  targets installed; `build:mac:arm` and `build:mac:intel` build one alone.
+- **A landing page at <https://h4md1.fr/watchme/>**, published from `site/` by
+  `.github/workflows/pages.yml`. Its download buttons resolve the newest
+  release's DMGs through the GitHub API, so there is no version number to
+  update by hand, and it carries its own Open Graph metadata — the repository
+  social preview does not cover a link to the site.
+- A social preview card (`.github/assets/social-preview.png`). Until now,
+  every link to the repository pasted into Slack or anywhere else rendered as
+  grey text.
+- `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`.
+
 ### Changed
 
+- **The desktop runtime is now Tauri 2 + Rust.** The native core owns the
+  process listing, tray icon, preference file, launch-at-login setting, and
+  quit action. The existing offline frontend keeps the same process polling,
+  filtering, notifications, sound, and hide-on-blur behavior.
 - **The window was rebuilt as a menu-bar panel rather than a desktop app.**
   It is undecorated, always on top, and hides the moment it loses focus, but
   it was laid out like a document window: an 80 px icon rail down the side,
@@ -22,11 +57,38 @@ and the project adheres to [semantic versioning](https://semver.org/).
 - **Preferences reads as a settings pane.** Bare checkboxes in a stack became
   three labelled groups of switches, each setting carrying a line explaining
   what it does.
+- **The README now says what the app does, and who it is for.** An "Is this
+  the right tool?" section names outright what WatchMe does *not* do — no
+  metrics, no killing processes — and the activity monitor that does. The
+  download link and the first-launch Gatekeeper warning move to the top of
+  the page: an unsigned application reports "damaged and can't be opened",
+  which most people read as malware rather than as the absence of a $99/year
+  subscription.
+- **The demo GIF was re-recorded.** The old one dated from before 0.11.0:
+  it showed a placeholder icon and carried a username and hostname in the
+  terminal title bar. The new one shows the tray badge, which did not exist
+  when the old one was made, and is 255 kB against 1.4 MB.
+- **Everything in the repository is now written in English** — this file,
+  the contributing guide, the code of conduct, and every code comment and
+  test name. The README was already English; the rest was French, which made
+  the project readable to a smaller set of people than it deserves.
+- The package description and the README no longer mention Windows or Linux,
+  which the release does not produce.
 - The styles moved out of a `<style>` block in `index.html` and into
   `styles.css`.
 
+### Removed
+
+- Documentation no longer ships inside the packaged application. `README.md`,
+  `CHANGELOG.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `CLAUDE.md`,
+  `docs/` and `.npmcheckrc` were all embedded in the `asar`, where they serve
+  no purpose at runtime. Same reasoning as the demo GIF in 0.11.0. (#12)
+
 ### Fixed
 
+- **The product name in the interface.** The window title and the tray
+  tooltip still announced "Script Watcher", the previous name. Two surfaces
+  seen on every launch, carrying a name that exists nowhere else. (#18)
 - **The process table no longer scrolls sideways.** Command lines are long
   enough to push the table past the width of the window, so reading the
   Command column meant scrolling horizontally and losing sight of the name it
@@ -51,9 +113,6 @@ and the project adheres to [semantic versioning](https://semver.org/).
 - **The window can be moved.** Removing the title bar left no drag handle
   anywhere in the interface, so the panel could not be repositioned. The new
   title bar is a drag region.
-- The process list stops polling the native side while the window is hidden,
-  and reads the filter expression from the preference cache instead of
-  crossing the IPC boundary on every refresh.
 - **The download buttons on the landing page resolve again.** The page picks
   a release's DMGs by matching the architecture in the asset name, and it
   only knew Electron's spelling — `arm64` and `x64`. Tauri names the same two
@@ -62,73 +121,17 @@ and the project adheres to [semantic versioning](https://semver.org/).
   releases page. Either spelling now matches, as does a universal bundle, and
   a release carrying no Intel build hides that button rather than offering a
   download that is not there.
+- **The install instructions name the right file.** The README told you to
+  look for `arm64` on the releases page, which is what Electron called the
+  Apple Silicon build. Tauri calls it `aarch64`, so the one instruction a
+  first-time user follows pointed at a filename no longer in the release.
 - **Release assets no longer carry build scratch.** Tauri leaves
   `bundle_dmg.sh` and `WatchMe.icns` in the same folder as the installer, and
   the upload step globbed the whole folder, so both were published as release
   assets. It uploads `*.dmg` now.
-
-### Added
-
-- **Notifications and sound can each be turned off**, from the Preferences
-  tab. Both default to on, including for anyone upgrading: `preferences.js`
-  completes whatever is on disk with the defaults, so a key the user has
-  never saved reads as "on" rather than as `undefined`. That direction is
-  the one thing here worth a test, and it has four.
-- **Intel Macs get a build again.** The move to Tauri quietly dropped the
-  `x64` slice that 0.11.x shipped, which would have left every Intel user on
-  0.11.1 with no upgrade and nothing to download. A release now builds both
-  `aarch64-apple-darwin` and `x86_64-apple-darwin` and publishes a DMG for
-  each. `npm run build:mac` produces both locally and needs both rustup
-  targets installed; `build:mac:arm` and `build:mac:intel` build one alone.
-
-### Changed
-
-- **The desktop runtime is now Tauri 2 + Rust.** The native core owns the
-  process listing, tray icon, preference file, launch-at-login setting, and
-  quit action. The existing offline frontend keeps the same process polling,
-  filtering, notifications, sound, and hide-on-blur behavior.
-- **The README now says what the app does, and who it is for.** An "Is this
-  the right tool?" section names outright what WatchMe does *not* do — no
-  metrics, no killing processes — and the activity monitor that does. The
-  download link and the first-launch Gatekeeper warning move to the top of
-  the page: an unsigned application reports "damaged and can't be opened",
-  which most people read as malware rather than as the absence of a $99/year
-  subscription.
-- The package description and the README no longer mention Windows or Linux,
-  which the release does not produce.
-- **The demo GIF was re-recorded.** The old one dated from before 0.11.0:
-  it showed a placeholder icon and carried a username and hostname in the
-  terminal title bar. The new one shows the tray badge, which did not exist
-  when the old one was made, and is 255 kB against 1.4 MB.
-- **Everything in the repository is now written in English** — this file,
-  the contributing guide, the code of conduct, and every code comment and
-  test name. The README was already English; the rest was French, which made
-  the project readable to a smaller set of people than it deserves.
-
-### Added
-
-- `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`.
-- A social preview card (`.github/assets/social-preview.png`). Until now,
-  every link to the repository pasted into Slack or anywhere else rendered as
-  grey text.
-- **A landing page at <https://h4md1.fr/watchme/>**, published from `site/` by
-  `.github/workflows/pages.yml`. Its download buttons resolve the newest
-  release's DMGs through the GitHub API, so there is no version number to
-  update by hand, and it carries its own Open Graph metadata — the repository
-  social preview does not cover a link to the site.
-
-### Removed
-
-- Documentation no longer ships inside the packaged application. `README.md`,
-  `CHANGELOG.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `CLAUDE.md`,
-  `docs/` and `.npmcheckrc` were all embedded in the `asar`, where they serve
-  no purpose at runtime. Same reasoning as the demo GIF in 0.11.0. (#12)
-
-### Fixed
-
-- **The product name in the interface.** The window title and the tray
-  tooltip still announced "Script Watcher", the previous name. Two surfaces
-  seen on every launch, carrying a name that exists nowhere else. (#18)
+- The process list stops polling the native side while the window is hidden,
+  and reads the filter expression from the preference cache instead of
+  crossing the IPC boundary on every refresh.
 
 ## [0.11.1] - 2026-08-21
 
